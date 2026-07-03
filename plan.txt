@@ -1,0 +1,39 @@
+Játékszabályok:
+
+High level: betűket kell szerezni licitálásokon és utána ezekből kirakni szavakat
+megadott kategóriákban.
+
+Részletes:
+Van n játékos és sok forduló. Minden forduló két típusú lehet:
+licit vagy szókirakás. Egy licit forduló úgy néz ki, hogy
+5 (ez egy paraméter) licitálás megy párhuzamosan és mindegyik úgy néz ki, hogy megadunk
+n random betűt és minden játékos betesz valamennyi pénzt titkosan. Utána minden licitnél
+megnézzük ki rakta a legtöbb pénzt, az választ először egy betűt a halmazból, aztán aki
+a második legtöbbet rakta, stb...
+Így ha pl 5 licit zajlik le párhuzamosan akkor a végére mindenki kapni fog 5
+betűt.
+Egy szókirakás forduló úgy néz ki, hogy adva van egy jól definiált kategória (pl
+országnevek) és minden játékosnak ki kell raknia az éppen nála lévő betűkből
+egy szót ebben a kategóriában.
+Aki kirak egy helyes szót ami pl K hosszú az kap K*K pontot.
+
+Az elején van valami fix összegű pénz amivel mindenki kezd, aztán
+még adagokban kap mindenki valamennyi pénzt a játék során. Ezek is paraméterek.
+Pl mindig 5 körönként kapunk újra pénzt.
+
+A körök sorrendje is előre adott és beállítható, pl
+2 licit, 1 szókirakás, 2 licit, 1 szókirakás, stb...
+
+Na most ehhez fogunk egy felületet csinálni. Python webapp legyen...
+Mit kellene tudnia:
+Legyen egy admin page ahol fel tudok tolteni egyszeruen témakör+szólistákat
+Aztán be lehessen állítani a játék paramétereit
+(melyik témakörök lesznek, hány játékos, hány kör stb...), de azért legyenek jó defaultok
+
+És utána így ne kelljen accocat létrehozni de csak úgy a nevedet beírva és egy linkkel
+meg lehessen hívni embereket egy játékba aztán meg el lehessen indítani...
+Időre menjen mindig, de ha rossz a connection akkor egyszerűen vissza lehessen lépni
+és legyen azért olyan is hogy ha már mindenki kész akkor továbbmegy a játék...
+
+Szóval legyen egy ilyen jól működő játék az egész...
+

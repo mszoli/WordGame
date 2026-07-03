@@ -1,0 +1,113 @@
+<title>Admin – Kategóriák</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<div class="container">
+    <h1>Admin: kategóriák és szólisták</h1>
+    <p><a href="/">← Vissza a főoldalra</a></p>
+
+    <div class="card">
+        <h2>Új kategória</h2>
+        <div class="row">
+            <input type="text" id="newCategoryName" placeholder="pl. Sportágak" style="flex:1;">
+            <button id="addCategoryBtn">Létrehozás</button>
+        </div>
+        <div class="error" id="categoryError"></div>
+    </div>
+
+    <div id="categories"></div>
+</div>
+
+<script src="/static/app.js"></script>
+<script>
+async function render() {
+    const box = document.getElementById("categories");
+    const cats = await api("GET", "/api/categories");
+    box.innerHTML = cats.map(c => `
+        <div class="card" data-id="${c.id}">
+            <div class="row" style="justify-content:space-between;">
+                <h3 style="margin:0;">${c.name} <span class="muted">(${c.word_count} szó)</span></h3>
+                <button class="danger delete-btn" data-id="${c.id}">Törlés</button>
+            </div>
+            <label>Szavak feltöltése (.txt fájl, soronként egy szó)</label>
+            <input type="file" accept=".txt" class="file-input" data-id="${c.id}">
+            <label>Vagy illeszd be soronként</label>
+            <textarea class="paste-input" data-id="${c.id}" placeholder="ALMA&#10;KÖRTE&#10;..."></textarea>
+            <button class="upload-btn" data-id="${c.id}">Szavak hozzáadása</button>
+            <div class="success upload-status" data-id="${c.id}"></div>
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer;">Szavak megtekintése</summary>
+                <div class="words-view muted" data-id="${c.id}"></div>
+            </details>
+        </div>
+    `).join("") || '<p class="muted">Nincs még kategória.</p>';
+
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Biztosan törlöd ezt a kategóriát és az összes hozzá tartozó szót?")) return;
+            await api("DELETE", `/api/categories/${btn.dataset.id}`);
+            render();
+        });
+    });
+
+    document.querySelectorAll(".upload-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const id = btn.dataset.id;
+            const statusBox = document.querySelector(`.upload-status[data-id="${id}"]`);
+            statusBox.className = "success upload-status";
+            statusBox.textContent = "";
+            let words = [];
+            const fileInput = document.querySelector(`.file-input[data-id="${id}"]`);
+            const pasteInput = document.querySelector(`.paste-input[data-id="${id}"]`);
+            if (fileInput.files.length > 0) {
+                const text = await fileInput.files[0].text();
+                words = text.split(/\r?\n/);
+            } else if (pasteInput.value.trim()) {
+                words = pasteInput.value.split(/\r?\n/);
+            } else {
+                statusBox.className = "error upload-status";
+                statusBox.textContent = "Válassz fájlt vagy illessz be szavakat.";
+                return;
+            }
+            try {
+                const res = await api("POST", `/api/categories/${id}/words`, { words });
+                statusBox.textContent = `${res.added} szó hozzáadva.`;
+                pasteInput.value = "";
+                fileInput.value = "";
+                render();
+            } catch (e) {
+                statusBox.className = "error upload-status";
+                statusBox.textContent = e.message;
+            }
+        });
+    });
+
+    document.querySelectorAll("details").forEach(d => {
+        d.addEventListener("toggle", async () => {
+            if (!d.open) return;
+            const viewBox = d.querySelector(".words-view");
+            const id = viewBox.dataset.id;
+            const res = await api("GET", `/api/categories/${id}/words`);
+            viewBox.textContent = res.words.join(", ") || "Nincs még szó ebben a kategóriában.";
+        });
+    });
+}
+
+document.getElementById("addCategoryBtn").addEventListener("click", async () => {
+    const errorBox = document.getElementById("categoryError");
+    errorBox.textContent = "";
+    const name = document.getElementById("newCategoryName").value.trim();
+    if (!name) {
+        errorBox.textContent = "Adj meg egy kategórianevet.";
+        return;
+    }
+    try {
+        await api("POST", "/api/categories", { name });
+        document.getElementById("newCategoryName").value = "";
+        render();
+    } catch (e) {
+        errorBox.textContent = e.message;
+    }
+});
+
+render();
+</script>

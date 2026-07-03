@@ -1,0 +1,106 @@
+<title>Szókirakós Játék</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<div class="container">
+    <h1>Szókirakós Játék</h1>
+
+    <div class="card">
+        <h2>Új játék létrehozása</h2>
+        <label>A neved</label>
+        <input type="text" id="hostName" placeholder="pl. Anna">
+
+        <div class="card" style="background:#faf9f5; margin-top:16px;">
+            <h3>Kategóriák a szókirakó körökhöz</h3>
+            <div id="categoryList" class="muted">Betöltés...</div>
+        </div>
+
+        <details style="margin-top:16px;">
+            <summary style="cursor:pointer; font-weight:600;">Haladó beállítások (opcionális, jó defaultok vannak)</summary>
+            <div class="row">
+                <div style="flex:1;">
+                    <label>Licitek száma körönként</label>
+                    <input type="number" id="numAuctions" value="5" min="1" max="10">
+                </div>
+                <div style="flex:1;">
+                    <label>Kezdő pénz</label>
+                    <input type="number" id="startingMoney" value="100" min="1">
+                </div>
+            </div>
+            <div class="row">
+                <div style="flex:1;">
+                    <label>Pénz-utánpótlás összege</label>
+                    <input type="number" id="refillAmount" value="20" min="0">
+                </div>
+                <div style="flex:1;">
+                    <label>Utánpótlás gyakorisága (körönként)</label>
+                    <input type="number" id="refillInterval" value="5" min="1">
+                </div>
+            </div>
+            <p class="muted">Nincs valódi visszaszámláló: minden kört a házigazda zár le egy gombnyomással, ha mindenki készen áll (vagy ha valaki lemaradt).</p>
+            <label>Körök mintázata (vesszővel elválasztva: bid = licit, word = szókirakás)</label>
+            <input type="text" id="roundPattern" value="bid,bid,word">
+            <label>Mintázat ismétlése</label>
+            <input type="number" id="patternRepeat" value="3" min="1">
+        </details>
+
+        <button id="createBtn">Játék létrehozása</button>
+        <div class="error" id="errorBox"></div>
+    </div>
+
+    <div class="card">
+        <p class="muted">Van már meghívó linked? Nyisd meg egyszerűen a kapott linket, ott tudsz csatlakozni névvel.</p>
+        <p><a href="/admin">Admin: kategóriák és szólisták kezelése →</a></p>
+    </div>
+</div>
+
+<script src="/static/app.js"></script>
+<script>
+async function loadCategories() {
+    const box = document.getElementById("categoryList");
+    try {
+        const cats = await api("GET", "/api/categories");
+        if (cats.length === 0) {
+            box.innerHTML = '<span class="muted">Nincs még kategória. <a href="/admin">Hozz létre egyet az admin oldalon</a>.</span>';
+            return;
+        }
+        box.innerHTML = cats.map(c => `
+            <label style="font-weight:400;">
+                <input type="checkbox" class="cat-check" value="${c.id}" checked>
+                ${c.name} <span class="muted">(${c.word_count} szó)</span>
+            </label>
+        `).join("");
+    } catch (e) {
+        box.textContent = "Hiba a kategóriák betöltésekor: " + e.message;
+    }
+}
+
+document.getElementById("createBtn").addEventListener("click", async () => {
+    const errorBox = document.getElementById("errorBox");
+    errorBox.textContent = "";
+    const hostName = document.getElementById("hostName").value.trim();
+    if (!hostName) {
+        errorBox.textContent = "Add meg a neved.";
+        return;
+    }
+    const categoryIds = Array.from(document.querySelectorAll(".cat-check:checked")).map(cb => parseInt(cb.value, 10));
+    const payload = {
+        host_name: hostName,
+        num_auctions: parseInt(document.getElementById("numAuctions").value, 10),
+        starting_money: parseInt(document.getElementById("startingMoney").value, 10),
+        refill_amount: parseInt(document.getElementById("refillAmount").value, 10),
+        refill_interval: parseInt(document.getElementById("refillInterval").value, 10),
+        round_pattern: document.getElementById("roundPattern").value.split(",").map(s => s.trim()).filter(Boolean),
+        pattern_repeat: parseInt(document.getElementById("patternRepeat").value, 10),
+        category_ids: categoryIds,
+    };
+    try {
+        const res = await api("POST", "/api/games", payload);
+        storeToken(res.game_id, res.player_token);
+        window.location.href = `/game?g=${res.game_id}`;
+    } catch (e) {
+        errorBox.textContent = e.message;
+    }
+});
+
+loadCategories();
+</script>

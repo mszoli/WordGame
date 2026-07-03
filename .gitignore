@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# App runtime data (SQLite db is generated/seeded at startup)
+data/*.db
+data/*.db-journal
+
+# Server runtime artifacts
+server.log
+server.pid
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
