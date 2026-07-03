@@ -8,8 +8,14 @@ LETTER_WEIGHTS: dict[str, int] = {
     "A": 9, "Á": 4, "B": 2, "C": 1, "D": 2, "E": 9, "É": 2, "F": 1, "G": 3,
     "H": 2, "I": 3, "Í": 1, "J": 2, "K": 4, "L": 4, "M": 3, "N": 4, "O": 4,
     "Ó": 1, "Ö": 2, "Ő": 1, "P": 2, "R": 3, "S": 4, "T": 4, "U": 1, "Ú": 1,
-    "Ü": 1, "Ű": 1, "V": 2, "Z": 2,
+    "Ü": 1, "Ű": 1, "V": 2, "W": 1, "X": 1, "Y": 5, "Z": 2,
 }
+# "Y" önálló betűként nem létezik a magyarban, de a gy/ly/ny/ty
+# betűkapcsolatok második tagjaként rendkívül gyakori (pl. "Magyarország",
+# "Gyula") — mivel ezeket a kapcsolatokat nem külön csempeként kezeljük,
+# hanem a két alapbetűjükre bontva, Y nélkül ezek a szavak kirakhatatlanok
+# lennének. "W" és "X" csak néhány idegen eredetű szóhoz kell (pl. "Botswana",
+# "Xenon"), ezért nagyon alacsony súllyal.
 
 _LETTERS = list(LETTER_WEIGHTS.keys())
 _WEIGHTS = list(LETTER_WEIGHTS.values())
