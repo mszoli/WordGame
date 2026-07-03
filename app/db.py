@@ -3,37 +3,23 @@ from pathlib import Path
 from typing import Optional
 
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "wordgame.db"
+WORDLIST_DIR = Path(__file__).resolve().parent.parent / "wordlists"
 
-SEED_CATEGORIES = {
-    "Országnevek": [
-        "MAGYARORSZÁG", "NÉMETORSZÁG", "FRANCIAORSZÁG", "OLASZORSZÁG", "SPANYOLORSZÁG",
-        "LENGYELORSZÁG", "AUSZTRIA", "SZLOVÁKIA", "ROMÁNIA", "HORVÁTORSZÁG",
-        "SVÁJC", "PORTUGÁLIA", "GÖRÖGORSZÁG", "SVÉDORSZÁG", "NORVÉGIA",
-        "FINNORSZÁG", "DÁNIA", "BELGIUM", "HOLLANDIA", "ÍRORSZÁG",
-        "JAPÁN", "KÍNA", "INDIA", "EGYIPTOM", "BRAZÍLIA", "KANADA", "MEXIKÓ",
-    ],
-    "Városnevek": [
-        "BUDAPEST", "SZEGED", "PÉCS", "DEBRECEN", "GYŐR", "MISKOLC", "SOPRON",
-        "EGER", "VESZPRÉM", "SZOLNOK", "KECSKEMÉT", "NYÍREGYHÁZA", "SZOMBATHELY",
-        "PARIS", "LONDON", "BERLIN", "ROMA", "BÉCS", "PRÁGA", "VARSÓ",
-    ],
-    "Állatok": [
-        "MACSKA", "KUTYA", "ELEFÁNT", "OROSZLÁN", "TIGRIS", "ZSIRÁF", "MEDVE",
-        "FARKAS", "RÓKA", "NYÚL", "EGÉR", "LÓ", "TEHÉN", "DISZNÓ", "BIRKA",
-        "KECSKE", "MAJOM", "ZEBRA", "KENGURU", "PINGVIN", "DELFIN", "CÁPA",
-        "SAS", "VARJÚ", "GALAMB", "PÓK", "HANGYA", "MÉH", "PILLANGÓ",
-    ],
-    "Gyümölcsök": [
-        "ALMA", "KÖRTE", "SZILVA", "BARACK", "CSERESZNYE", "MEGGY", "SZŐLŐ",
-        "EPER", "MÁLNA", "SZEDER", "BANÁN", "NARANCS", "CITROM", "GRÉPFRÚT",
-        "DINNYE", "ANANÁSZ", "MANGÓ", "KIVI", "FÜGE",
-    ],
-    "Foglalkozások": [
-        "TANÁR", "ORVOS", "MÉRNÖK", "ÁPOLÓ", "ÜGYVÉD", "SZAKÁCS", "PINCÉR",
-        "RENDŐR", "TŰZOLTÓ", "PILÓTA", "ÍRÓ", "FESTŐ", "ZENÉSZ", "SZÍNÉSZ",
-        "FODRÁSZ", "ASZTALOS", "LAKATOS", "VILLANYSZERELŐ", "KERTÉSZ", "PÉKKÉSZ",
-    ],
+SEED_CATEGORY_FILES = {
+    "Fiú név": "fiu_nevek.txt",
+    "Lány név": "lany_nevek.txt",
+    "Ország": "orszagok.txt",
+    "Magyar város/település": "magyar_varosok.txt",
+    "Kémiai elemek": "kemiai_elemek.txt",
 }
+
+
+def _load_wordlist(filename: str) -> list[str]:
+    path = WORDLIST_DIR / filename
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
 
 
 def _connect() -> sqlite3.Connection:
@@ -69,7 +55,8 @@ def init_db() -> None:
 
         count = conn.execute("SELECT COUNT(*) AS c FROM categories").fetchone()["c"]
         if count == 0:
-            for name, words in SEED_CATEGORIES.items():
+            for name, filename in SEED_CATEGORY_FILES.items():
+                words = _load_wordlist(filename)
                 cur = conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
                 category_id = cur.lastrowid
                 conn.executemany(
