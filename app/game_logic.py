@@ -21,18 +21,33 @@ def start_game(game: Game) -> None:
     for token in game.player_order:
         game.players[token].money = game.settings.starting_money
     game.status = "in_progress"
+    _assign_round_categories(game)
     setup_round(game, 0)
 
 
-def _next_category(game: Game) -> tuple[int, str]:
-    if not game.category_cycle:
-        game.category_cycle = list(game.settings.category_ids)
-        random.shuffle(game.category_cycle)
-    if not game.category_cycle:
-        return 0, "Nincs kategória"
-    cat_id = game.category_cycle.pop()
-    cat = db.get_category(cat_id)
-    return cat_id, (cat["name"] if cat else "?")
+def _assign_round_categories(game: Game) -> None:
+    """Minden szókirakó körhöz előre kisorsol egy kategóriát, hogy a játékosok
+    mindig lássák, mi jön legközelebb (nem csak a kör elindulásakor derül ki)."""
+    cycle: list[int] = []
+    for index, round_type in enumerate(game.round_sequence):
+        if round_type != "word":
+            continue
+        if not cycle:
+            cycle = list(game.settings.category_ids)
+            random.shuffle(cycle)
+        if not cycle:
+            game.round_categories[index] = (0, "Nincs kategória")
+            continue
+        cat_id = cycle.pop()
+        cat = db.get_category(cat_id)
+        game.round_categories[index] = (cat_id, cat["name"] if cat else "?")
+
+
+def _upcoming_category_name(game: Game) -> str | None:
+    for index in range(max(game.current_round_index, 0), len(game.round_sequence)):
+        if game.round_sequence[index] == "word":
+            return game.round_categories.get(index, (0, "?"))[1]
+    return None
 
 
 def setup_round(game: Game, index: int) -> None:
@@ -47,7 +62,7 @@ def setup_round(game: Game, index: int) -> None:
         auctions = [Auction(letters=draw_letters(n_players)) for _ in range(game.settings.num_auctions)]
         game.current_round = BidRound(auctions=auctions)
     else:
-        cat_id, cat_name = _next_category(game)
+        cat_id, cat_name = game.round_categories.get(index, (0, "?"))
         game.current_round = WordRound(category_id=cat_id, category_name=cat_name)
 
 
@@ -243,6 +258,7 @@ def serialize_state(game: Game, viewer_token: str | None) -> dict:
         "round_index": game.current_round_index,
         "total_rounds": len(game.round_sequence),
         "round_history": game.round_history[-5:],
+        "next_category": _upcoming_category_name(game) if game.status == "in_progress" else None,
         "round": None,
     }
 

@@ -41,6 +41,11 @@ function renderHeader(state) {
         <p><strong>A betűid:</strong> ${
             state.you.letters.map((l) => `<span class="tile">${l}</span>`).join("") || '<span class="muted">(nincs betűd)</span>'
         }</p>
+        ${
+            state.next_category
+                ? `<p><strong>Következő szókategória:</strong> ${state.next_category}</p>`
+                : ""
+        }
         <ul class="player-list">`;
     state.players.forEach((p) => {
         html += `<li><span>${p.name}${p.is_host ? " 👑" : ""}</span><span>${p.score} pont | ${p.money} pénz | ${p.letter_count} betű</span></li>`;

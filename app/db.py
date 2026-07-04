@@ -9,7 +9,7 @@ SEED_CATEGORY_FILES = {
     "Fiú név": "fiu_nevek.txt",
     "Lány név": "lany_nevek.txt",
     "Ország": "orszagok.txt",
-    "Magyar város/település": "magyar_varosok.txt",
+    "Magyar város": "magyar_varosok.txt",
     "Kémiai elemek": "kemiai_elemek.txt",
 }
 

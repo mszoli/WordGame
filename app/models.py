@@ -106,7 +106,7 @@ class Game:
     current_round_index: int = -1
     current_round: Optional[object] = None  # BidRound | WordRound
     round_history: list[dict] = field(default_factory=list)
-    category_cycle: list[int] = field(default_factory=list)
+    round_categories: dict[int, tuple[int, str]] = field(default_factory=dict)  # word round index -> (category_id, name)
     created_at: float = field(default_factory=now)
 
     @staticmethod
