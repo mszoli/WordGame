@@ -34,4 +34,6 @@ class PickLetterRequest(BaseModel):
 
 
 class WordSubmitRequest(BaseModel):
-    word: str = Field(min_length=1, max_length=64)
+    # min_length=0: a jatekosnak lehetosege kell legyen ures szot ("nincs szavam")
+    # bekuldeni, ha a birtokolt betuibol nem tud semmit kirakni ebben a korben.
+    word: str = Field(min_length=0, max_length=64)

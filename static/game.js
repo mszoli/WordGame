@@ -236,23 +236,34 @@ function buildWordForm(state) {
         <p>Kategória: <strong>${round.category_name}</strong></p>
         <label>A szavad</label>
         <input type="text" id="wordInput" value="${round.your_submission || ""}" placeholder="pl. ALMA">
-        <button id="submitWordBtn">Szó beküldése</button>
+        <div class="row">
+            <button id="submitWordBtn">Szó beküldése</button>
+            <button id="passWordBtn" class="secondary">Nincs szavam (kihagyás)</button>
+        </div>
         <p class="muted" id="wordSubmittedCount"></p>
         <p class="success" id="wordConfirm"></p>
         <div class="error" id="wordError"></div>
     </div>`;
     document.getElementById("roundContent").innerHTML = html;
-    document.getElementById("submitWordBtn").addEventListener("click", async () => {
-        const word = document.getElementById("wordInput").value.trim();
-        if (!word) return;
+
+    async function sendWord(word) {
         try {
             await api("POST", `/api/games/${gameId}/word?token=${token}`, { word });
             document.getElementById("wordError").textContent = "";
-            document.getElementById("wordConfirm").textContent =
-                "Beküldve! Amíg a kör le nem zárul, még módosíthatod és újraküldheted.";
+            document.getElementById("wordConfirm").textContent = word
+                ? "Beküldve! Amíg a kör le nem zárul, még módosíthatod és újraküldheted."
+                : "Kihagyva — jelezted, hogy nincs kirakható szavad. Amíg a kör le nem zárul, még beküldhetsz szót helyette.";
         } catch (e) {
             document.getElementById("wordError").textContent = e.message;
         }
+    }
+
+    document.getElementById("submitWordBtn").addEventListener("click", () => {
+        sendWord(document.getElementById("wordInput").value.trim());
+    });
+    document.getElementById("passWordBtn").addEventListener("click", () => {
+        document.getElementById("wordInput").value = "";
+        sendWord("");
     });
 }
 
