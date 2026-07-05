@@ -22,7 +22,17 @@ from app.store import store
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
 
+DEFAULT_CATEGORY_ORDER = ["Fiú név", "Ország", "Lány név", "Kémiai elemek", "Magyar város"]
+
 app = FastAPI(title="Szókirakós Játék")
+
+
+def _default_category_ids() -> list[int]:
+    cats = db.list_categories()
+    by_name = {c["name"]: c["id"] for c in cats}
+    ordered = [by_name[name] for name in DEFAULT_CATEGORY_ORDER if name in by_name]
+    remaining = [c["id"] for c in cats if c["name"] not in DEFAULT_CATEGORY_ORDER]
+    return ordered + remaining
 
 
 @app.on_event("startup")
@@ -110,7 +120,7 @@ def _get_player_or_403(game: Game, token: str | None) -> Player:
 
 @app.post("/api/games")
 def create_game(req: CreateGameRequest):
-    category_ids = req.category_ids or [c["id"] for c in db.list_categories()]
+    category_ids = req.category_ids or _default_category_ids()
     settings = GameSettings(
         num_auctions=req.num_auctions,
         starting_money=req.starting_money,
@@ -168,6 +178,20 @@ async def start_game(game_id: str, token: str):
     async with store.lock_for(game_id):
         try:
             game_logic.start_game(game)
+        except game_logic.GameError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True}
+
+
+@app.post("/api/games/{game_id}/add_bot")
+async def add_bot(game_id: str, token: str):
+    game = _get_game_or_404(game_id)
+    player = _get_player_or_403(game, token)
+    if not player.is_host:
+        raise HTTPException(status_code=403, detail="Csak a házigazda adhat hozzá botot.")
+    async with store.lock_for(game_id):
+        try:
+            game_logic.add_bot(game)
         except game_logic.GameError as e:
             raise HTTPException(status_code=400, detail=str(e))
     return {"ok": True}

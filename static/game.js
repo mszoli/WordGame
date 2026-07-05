@@ -32,6 +32,28 @@ function renderJoinForm() {
     });
 }
 
+function renderRoundSchedule(state) {
+    const chips = state.round_schedule
+        .map((r, i) => {
+            const label = r.type === "bid" ? "Licit" : `Szó: ${r.category}`;
+            const cls = i === state.round_index ? "turn" : i < state.round_index ? "done" : "wait";
+            return `<span class="badge ${cls}">${i + 1}. ${label}</span>`;
+        })
+        .join(" ");
+    return `<p><strong>Körök sorrendje:</strong></p><div class="row" style="flex-wrap:wrap; gap:4px;">${chips}</div>`;
+}
+
+function renderLastWordResult(state) {
+    const r = state.last_word_result;
+    const rows = Object.entries(r.results)
+        .map(([name, res]) => `<li><span>${name}</span><span>${res.valid ? `✅ ${res.word} (+${res.points})` : "❌"}</span></li>`)
+        .join("");
+    return `<div class="card" style="background:#faf9f5;">
+        <strong>Előző szókirakás (${r.category}):</strong>
+        <ul class="player-list">${rows}</ul>
+    </div>`;
+}
+
 function renderHeader(state) {
     let html = `<div class="card">
         <div class="row" style="justify-content:space-between;">
@@ -41,14 +63,11 @@ function renderHeader(state) {
         <p><strong>A betűid:</strong> ${
             state.you.letters.map((l) => `<span class="tile">${l}</span>`).join("") || '<span class="muted">(nincs betűd)</span>'
         }</p>
-        ${
-            state.next_category
-                ? `<p><strong>Következő szókategória:</strong> ${state.next_category}</p>`
-                : ""
-        }
+        ${state.round_schedule ? renderRoundSchedule(state) : ""}
+        ${state.last_word_result ? renderLastWordResult(state) : ""}
         <ul class="player-list">`;
     state.players.forEach((p) => {
-        html += `<li><span>${p.name}${p.is_host ? " 👑" : ""}</span><span>${p.score} pont | ${p.money} pénz | ${p.letter_count} betű</span></li>`;
+        html += `<li><span>${p.name}${p.is_host ? " 👑" : ""}${p.is_bot ? " 🤖" : ""}</span><span>${p.score} pont | ${p.money} pénz | ${p.letter_count} betű</span></li>`;
     });
     html += `</ul>`;
     if (state.you.is_host) {
@@ -77,10 +96,14 @@ function renderLobby(state) {
         <p>Hívd meg a többieket ezzel a linkkel:</p>
         <div class="row"><input type="text" readonly value="${joinUrl}" id="joinLink" style="flex:1;"><button id="copyLinkBtn" class="secondary">Másolás</button></div>
         <h4>Játékosok (${state.players.length})</h4>
-        <ul class="player-list">${state.players.map((p) => `<li><span>${p.name}${p.is_host ? " 👑" : ""}</span></li>`).join("")}</ul>
+        <ul class="player-list">${state.players.map((p) => `<li><span>${p.name}${p.is_host ? " 👑" : ""}${p.is_bot ? " 🤖" : ""}</span></li>`).join("")}</ul>
         ${
             canStart
-                ? `<button id="startBtn" ${state.players.length < 2 ? "disabled" : ""}>Játék indítása</button>${state.players.length < 2 ? '<p class="muted">Legalább 2 játékos kell az induláshoz.</p>' : ""}`
+                ? `<div class="row">
+                    <button id="startBtn" ${state.players.length < 2 ? "disabled" : ""}>Játék indítása</button>
+                    <button id="addBotBtn" class="secondary">Bot hozzáadása</button>
+                   </div>
+                   ${state.players.length < 2 ? '<p class="muted">Legalább 2 játékos kell az induláshoz.</p>' : ""}`
                 : '<p class="muted">Várakozás, hogy a házigazda elindítsa a játékot...</p>'
         }
         <div class="error" id="lobbyError"></div>
@@ -93,6 +116,14 @@ function renderLobby(state) {
         document.getElementById("startBtn").addEventListener("click", async () => {
             try {
                 await api("POST", `/api/games/${gameId}/start?token=${token}`);
+            } catch (e) {
+                document.getElementById("lobbyError").textContent = e.message;
+            }
+        });
+        document.getElementById("addBotBtn").addEventListener("click", async () => {
+            try {
+                await api("POST", `/api/games/${gameId}/add_bot?token=${token}`);
+                poll();
             } catch (e) {
                 document.getElementById("lobbyError").textContent = e.message;
             }

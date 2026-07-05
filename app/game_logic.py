@@ -5,11 +5,22 @@ from collections import Counter
 
 from app import db
 from app.letters import draw_letters
-from app.models import Auction, BidRound, Game, WordRound
+from app.models import Auction, BidRound, Game, Player, WordRound
 
 
 class GameError(ValueError):
     pass
+
+
+def add_bot(game: Game) -> str:
+    if game.status != "lobby":
+        raise GameError("Csak a váróteremben lehet botot hozzáadni.")
+    existing_bots = sum(1 for p in game.players.values() if p.is_bot)
+    name = f"Bot {existing_bots + 1}"
+    token = Game.generate_token()
+    game.players[token] = Player(token=token, name=name, is_bot=True)
+    game.player_order.append(token)
+    return token
 
 
 def start_game(game: Game) -> None:
@@ -26,27 +37,37 @@ def start_game(game: Game) -> None:
 
 
 def _assign_round_categories(game: Game) -> None:
-    """Minden szókirakó körhöz előre kisorsol egy kategóriát, hogy a játékosok
-    mindig lássák, mi jön legközelebb (nem csak a kör elindulásakor derül ki)."""
+    """Minden szókirakó körhöz előre kisorsol egy kategóriát, hogy a teljes
+    kör-sorrend előre látható legyen. A kategóriák a beállított sorrendben
+    (settings.category_ids) ismétlődnek, nincs véletlen keverés."""
     cycle: list[int] = []
     for index, round_type in enumerate(game.round_sequence):
         if round_type != "word":
             continue
         if not cycle:
             cycle = list(game.settings.category_ids)
-            random.shuffle(cycle)
         if not cycle:
             game.round_categories[index] = (0, "Nincs kategória")
             continue
-        cat_id = cycle.pop()
+        cat_id = cycle.pop(0)
         cat = db.get_category(cat_id)
         game.round_categories[index] = (cat_id, cat["name"] if cat else "?")
 
 
-def _upcoming_category_name(game: Game) -> str | None:
-    for index in range(max(game.current_round_index, 0), len(game.round_sequence)):
-        if game.round_sequence[index] == "word":
-            return game.round_categories.get(index, (0, "?"))[1]
+def _round_schedule(game: Game) -> list[dict]:
+    schedule = []
+    for index, round_type in enumerate(game.round_sequence):
+        if round_type == "word":
+            schedule.append({"index": index, "type": "word", "category": game.round_categories.get(index, (0, "?"))[1]})
+        else:
+            schedule.append({"index": index, "type": "bid"})
+    return schedule
+
+
+def _last_word_result(game: Game) -> dict | None:
+    for entry in reversed(game.round_history):
+        if entry.get("type") == "word":
+            return entry
     return None
 
 
@@ -163,14 +184,85 @@ def _tick_word_round(game: Game, wr: WordRound) -> None:
         )
 
 
+def _bot_bid_amounts(game: Game, br: BidRound, player: Player) -> dict[str, int]:
+    remaining_bid_rounds = sum(
+        1
+        for i in range(game.current_round_index, len(game.round_sequence))
+        if game.round_sequence[i] == "bid"
+    )
+    share = player.money / max(1, remaining_bid_rounds)
+    budget = max(0, min(int(share * random.uniform(0.4, 1.3)), player.money))
+    n = len(br.auctions)
+    if n == 0 or budget == 0:
+        return {str(i): 0 for i in range(n)}
+    weights = [random.random() for _ in range(n)]
+    total_weight = sum(weights)
+    amounts = [int(budget * w / total_weight) for w in weights]
+    while sum(amounts) > budget:
+        amounts[amounts.index(max(amounts))] -= 1
+    return {str(i): amounts[i] for i in range(n)}
+
+
+def _run_bot_bids(game: Game, br: BidRound) -> None:
+    if any(a.revealed for a in br.auctions):
+        return
+    for token in game.player_order:
+        player = game.players[token]
+        if not player.is_bot or token in br.submitted:
+            continue
+        submit_bid(game, token, _bot_bid_amounts(game, br, player))
+
+
+def _run_bot_picks(game: Game, br: BidRound) -> None:
+    for auction in br.auctions:
+        if not auction.revealed:
+            continue
+        while not auction.done:
+            picker = auction.current_picker()
+            if picker is None or not game.players[picker].is_bot:
+                break
+            _assign_letter(game, auction, picker, random.choice(auction.remaining))
+
+
+def _bot_choose_word(category_id: int, letters: list[str]) -> str:
+    candidates = [w for w in db.get_words(category_id) if can_form_word(letters, w)]
+    if not candidates:
+        return ""
+    best_len = max(len(w) for w in candidates)
+    return random.choice([w for w in candidates if len(w) == best_len])
+
+
+def _run_bot_words(game: Game, wr: WordRound) -> None:
+    if wr.resolved:
+        return
+    for token in game.player_order:
+        player = game.players[token]
+        if not player.is_bot or token in wr.submissions:
+            continue
+        submit_word(game, token, _bot_choose_word(wr.category_id, player.letters))
+
+
+def _run_bot_logic(game: Game) -> None:
+    if game.status != "in_progress" or game.current_round is None:
+        return
+    round_ = game.current_round
+    if isinstance(round_, BidRound):
+        _run_bot_bids(game, round_)
+        _run_bot_picks(game, round_)
+    elif isinstance(round_, WordRound):
+        _run_bot_words(game, round_)
+
+
 def tick(game: Game) -> None:
     if game.status != "in_progress" or game.current_round is None:
         return
+    _run_bot_logic(game)
     round_ = game.current_round
     if isinstance(round_, BidRound):
         _tick_bid_round(game, round_)
     elif isinstance(round_, WordRound):
         _tick_word_round(game, round_)
+    _run_bot_logic(game)
 
 
 def force_end_round(game: Game) -> None:
@@ -258,7 +350,8 @@ def serialize_state(game: Game, viewer_token: str | None) -> dict:
         "round_index": game.current_round_index,
         "total_rounds": len(game.round_sequence),
         "round_history": game.round_history[-5:],
-        "next_category": _upcoming_category_name(game) if game.status == "in_progress" else None,
+        "round_schedule": _round_schedule(game) if game.round_sequence else None,
+        "last_word_result": _last_word_result(game),
         "round": None,
     }
 

@@ -16,6 +16,7 @@ class Player:
     token: str
     name: str
     is_host: bool = False
+    is_bot: bool = False
     money: int = 0
     letters: list[str] = field(default_factory=list)
     score: int = 0
@@ -25,6 +26,7 @@ class Player:
         d = {
             "name": self.name,
             "is_host": self.is_host,
+            "is_bot": self.is_bot,
             "score": self.score,
             "money": self.money,
             "letter_count": len(self.letters),
