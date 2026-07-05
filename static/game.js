@@ -46,7 +46,7 @@ function renderRoundSchedule(state) {
 function renderLastWordResult(state) {
     const r = state.last_word_result;
     const rows = Object.entries(r.results)
-        .map(([name, res]) => `<li><span>${name}</span><span>${res.valid ? `✅ ${res.word} (+${res.points})` : "❌"}</span></li>`)
+        .map(([name, res]) => `<li><span>${name}</span><span>${res.valid ? `✅ ${res.word} (hossz: ${res.length})` : `❌ (hossz: ${res.length})`}</span></li>`)
         .join("");
     return `<div class="card" style="background:#faf9f5;">
         <strong>Előző szókirakás (${r.category}):</strong>
@@ -275,9 +275,9 @@ function patchWordStatus(state) {
 function renderWordResults(state) {
     const round = state.round;
     let html = `<div class="card"><h3>Szókirakás eredménye</h3><p>Kategória: <strong>${round.category_name}</strong></p>
-        <table><tr><th>Játékos</th><th>Szó</th><th>Érvényes?</th><th>Pont</th></tr>`;
+        <table><tr><th>Játékos</th><th>Szó</th><th>Érvényes?</th><th>Hossz (pontozáshoz)</th></tr>`;
     Object.entries(round.results).forEach(([name, r]) => {
-        html += `<tr><td>${name}</td><td>${r.word || "-"}</td><td>${r.valid ? "✅" : "❌"}</td><td>${r.points}</td></tr>`;
+        html += `<tr><td>${name}</td><td>${r.word || "-"}</td><td>${r.valid ? "✅" : "❌"}</td><td>${r.length}</td></tr>`;
     });
     html += `</table><p class="muted">Hamarosan folytatódik a játék...</p></div>`;
     document.getElementById("roundContent").innerHTML = html;

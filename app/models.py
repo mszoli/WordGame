@@ -20,6 +20,7 @@ class Player:
     money: int = 0
     letters: list[str] = field(default_factory=list)
     score: int = 0
+    word_lengths: list[int] = field(default_factory=list)  # kirakott szavak hossza korokent (1, ha nem sikerult)
     connected_hint: float = field(default_factory=now)  # last poll timestamp
 
     def public(self, viewer_token: Optional[str]) -> dict:
@@ -90,7 +91,7 @@ class GameSettings:
     refill_amount: int = 20
     refill_interval: int = 5
     round_pattern: list[str] = field(default_factory=lambda: ["bid", "bid", "word"])
-    pattern_repeat: int = 3
+    pattern_repeat: int = 5  # default: pontosan 5 szokirako kor (a pontozasi keplet ezt felteteli)
     category_ids: list[int] = field(default_factory=list)
 
     def build_round_sequence(self) -> list[str]:

@@ -16,7 +16,7 @@ class CreateGameRequest(BaseModel):
     refill_amount: int = Field(default=20, ge=0, le=100000)
     refill_interval: int = Field(default=5, ge=1, le=50)
     round_pattern: list[str] = Field(default_factory=lambda: ["bid", "bid", "word"])
-    pattern_repeat: int = Field(default=3, ge=1, le=20)
+    pattern_repeat: int = Field(default=5, ge=1, le=20)
     category_ids: list[int] = Field(default_factory=list)
 
 

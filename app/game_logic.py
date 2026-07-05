@@ -154,6 +154,16 @@ def consume_word_letters(letters: list[str], word: str) -> None:
         letters.remove(ch)
 
 
+def _compute_score(word_lengths: list[int]) -> int:
+    """Vegso pontszam: a leghosszabb 5 kirakott szo hossza (a>=b>=c>=d>=e,
+    hianyzo/sikertelen kor eseten a hossz 1-nek szamit) -> a*a*a*b*b*c*d*e.
+    A keplet 5 szokirako kort feltetelez; ha ennel tobb/kevesebb van,
+    a legjobb 5 ertekkel (illetve 1-es paddinggel) szamolunk."""
+    lengths = sorted(list(word_lengths) + [1] * max(0, 5 - len(word_lengths)), reverse=True)[:5]
+    a, b, c, d, e = lengths
+    return a * a * a * b * b * c * d * e
+
+
 def _resolve_word_round(game: Game, wr: WordRound) -> None:
     valid_words = db.get_word_set(wr.category_id)
     for token in game.player_order:
@@ -161,11 +171,13 @@ def _resolve_word_round(game: Game, wr: WordRound) -> None:
         word = wr.submissions.get(token, "").strip().upper()
         if word and can_form_word(player.letters, word) and word in valid_words:
             consume_word_letters(player.letters, word)
-            points = len(word) ** 2
-            player.score += points
-            wr.results[token] = {"word": word, "valid": True, "points": points}
+            length = len(word)
+            wr.results[token] = {"word": word, "valid": True, "length": length}
         else:
-            wr.results[token] = {"word": word, "valid": False, "points": 0}
+            length = 1
+            wr.results[token] = {"word": word, "valid": False, "length": length}
+        player.word_lengths.append(length)
+        player.score = _compute_score(player.word_lengths)
     wr.resolved = True
 
 
