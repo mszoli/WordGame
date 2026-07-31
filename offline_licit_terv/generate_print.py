@@ -95,7 +95,7 @@ def build_latex(structure: dict) -> str:
 
     tex = rf"""\documentclass[11pt]{{extarticle}}
 \usepackage{{fontspec}}
-\usepackage[a4paper,landscape,margin=0.8cm]{{geometry}}
+\usepackage[a4paper,landscape,margin=1.1cm]{{geometry}}
 \usepackage{{array}}
 \usepackage{{longtable}}
 \renewcommand{{\arraystretch}}{{2.2}}
