@@ -94,13 +94,13 @@ def build_latex(structure: dict) -> str:
 \usepackage{{array}}
 \usepackage{{longtable}}
 \renewcommand{{\arraystretch}}{{2.2}}
+\setlength{{\tabcolsep}}{{12pt}}
 \pagestyle{{empty}}
 \begin{{document}}
 
 \begin{{center}}
 {{\Large \textbf{{Licitálós Szókirakós -- teljes licit-menetrend}}}}\\[4pt]
-{{\small {structure['csapatok_szama']} csapat, {structure['termek_szama']} terem/licit --
-seed: {structure['seed']}}}
+{{\small {structure['csapatok_szama']} csapat, {structure['termek_szama']} terem/licit}}
 \end{{center}}
 \vspace{{8pt}}
 
