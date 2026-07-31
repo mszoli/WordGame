@@ -25,8 +25,12 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 COLS = 5
 ROWS = 5
 CELL_W_CM = 3.6
-CELL_H_CM = 5.3
-PAGE_MARGIN_CM = 1.2  # nyomtatasbiztos szel - sok nyomtato nem tud a lap szelere nyomtatni
+CELL_H_CM = 5.1
+# nyomtatasbiztos szel - sok nyomtato nem tud a lap szelere nyomtatni;
+# fent/lent kicsit tobb, mint oldalt, hogy a racs biztosan ne csusszon
+# ki fugolegesen sem
+MARGIN_SIDE_CM = 1.2
+MARGIN_TOPBOTTOM_CM = 1.6
 
 
 def escape_latex(s: str) -> str:
@@ -79,7 +83,7 @@ def build_document(pages: list[list[str]]) -> str:
 
     return rf"""\documentclass[12pt]{{article}}
 \usepackage{{fontspec}}
-\usepackage[a4paper,margin={PAGE_MARGIN_CM}cm]{{geometry}}
+\usepackage[a4paper,left={MARGIN_SIDE_CM}cm,right={MARGIN_SIDE_CM}cm,top={MARGIN_TOPBOTTOM_CM}cm,bottom={MARGIN_TOPBOTTOM_CM}cm]{{geometry}}
 \usepackage{{tikz}}
 \pagestyle{{empty}}
 \setlength{{\parindent}}{{0pt}}
