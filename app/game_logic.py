@@ -4,7 +4,7 @@ import random
 from collections import Counter
 
 from app import db
-from app.letters import draw_letters
+from app.letters import apportion_letters
 from app.models import Auction, BidRound, Game, Player, WordRound
 
 
@@ -41,18 +41,34 @@ BID_ROUND_TYPES = ("bid", "bid_single", "bid_double")
 
 
 def _assign_round_letters(game: Game) -> None:
-    """Minden licit körhöz előre kisorsolja a szobánkénti betűket (vagy
-    dupla licitnél betűpárokat), hogy a teljes 'betűs táblázat' már a játék
-    elején látható legyen mindenki számára, nem csak az adott kör elején."""
+    """Előre kiszámolja és kisorsolja az EGÉSZ játékhoz szükséges összes
+    betűt egyszerre (a súlyoknak megfelelő pontos darabszámmal, ld.
+    apportion_letters), és ezt a már megkevert listát osztja szét sorban
+    a körök, termek és játékosok között. Így összesítve a jáékon belül
+    pontosan a súlyoknak megfelelő lesz az elosztás - egy magas súlyú
+    betű nem maradhat ki véletlenül sok körön át, mint egymástól
+    független véletlen húzásoknál előfordulhatna."""
     n_players = len(game.player_order)
-    for index, round_type in enumerate(game.round_sequence):
-        if round_type not in BID_ROUND_TYPES:
-            continue
+    bid_rounds = [
+        (index, round_type)
+        for index, round_type in enumerate(game.round_sequence)
+        if round_type in BID_ROUND_TYPES
+    ]
+    total_units = sum(
+        game.settings.num_auctions * n_players * (2 if round_type == "bid_double" else 1)
+        for _, round_type in bid_rounds
+    )
+    bag = apportion_letters(total_units)
+
+    pos = 0
+    for index, round_type in bid_rounds:
         unit_size = 2 if round_type == "bid_double" else 1
         auctions_letters = []
         for _ in range(game.settings.num_auctions):
-            raw = draw_letters(n_players * unit_size)
-            units = ["".join(raw[i * unit_size : (i + 1) * unit_size]) for i in range(n_players)]
+            chunk_size = n_players * unit_size
+            chunk = bag[pos : pos + chunk_size]
+            pos += chunk_size
+            units = ["".join(chunk[i * unit_size : (i + 1) * unit_size]) for i in range(n_players)]
             auctions_letters.append(units)
         game.round_letter_sets[index] = auctions_letters
 
@@ -107,12 +123,19 @@ def setup_round(game: Game, index: int) -> None:
         bid_type = "double" if round_type == "bid_double" else "single"
         auctions_letters = game.round_letter_sets.get(index)
         if auctions_letters is None:
+            # Vedelmi ag: normalisan _assign_round_letters mar a jatek elejen
+            # feltolti a round_letter_sets-et minden licit korre.
             n_players = len(game.player_order)
             unit_size = 2 if bid_type == "double" else 1
-            auctions_letters = [
-                ["".join(draw_letters(unit_size)) for _ in range(n_players)]
-                for _ in range(game.settings.num_auctions)
-            ]
+            bag = apportion_letters(game.settings.num_auctions * n_players * unit_size)
+            pos = 0
+            auctions_letters = []
+            for _ in range(game.settings.num_auctions):
+                chunk = bag[pos : pos + n_players * unit_size]
+                pos += n_players * unit_size
+                auctions_letters.append(
+                    ["".join(chunk[i * unit_size : (i + 1) * unit_size]) for i in range(n_players)]
+                )
         auctions = [Auction(letters=units) for units in auctions_letters]
         game.current_round = BidRound(auctions=auctions, bid_type=bid_type)
     else:

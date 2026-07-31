@@ -17,9 +17,30 @@ LETTER_WEIGHTS: dict[str, int] = {
 # lennének. "W", "X" és "Q" csak néhány idegen eredetű szóhoz/névhez kell
 # (pl. "Botswana", "Xenon", "Squeak"), ezért nagyon alacsony súllyal.
 
-_LETTERS = list(LETTER_WEIGHTS.keys())
-_WEIGHTS = list(LETTER_WEIGHTS.values())
+def apportion_letters(total: int) -> list[str]:
+    """A megadott összdarabszámra előre, egyszerre kiszámolja a súlyok szerint
+    pontosan hány darab legyen az egyes betűkből (legnagyobb maradék /
+    Hamilton-módszer, hogy az összeg pontosan `total` legyen), majd a teljes
+    listát egyben megkeveri.
 
-
-def draw_letters(n: int) -> list[str]:
-    return random.choices(_LETTERS, weights=_WEIGHTS, k=n)
+    Ezt egyszer hívjuk meg az egész játékra előre (nem körönként, nem
+    húzásonként), utána a visszaadott listát sorban osztjuk szét a körök/
+    termek/játékosok között. Így összesítve pontosan a súlyoknak megfelelő
+    lesz az elosztás, nem független véletlen húzásokra hagyatkozunk körről
+    körre — az korábban hosszú távon egyenetlenségeket okozhatott (pl. egy
+    magas súlyú betű, mint az "A", véletlenül sok körön át kimaradhatott).
+    """
+    if total <= 0:
+        return []
+    total_weight = sum(LETTER_WEIGHTS.values())
+    exact = {letter: total * weight / total_weight for letter, weight in LETTER_WEIGHTS.items()}
+    counts = {letter: int(value) for letter, value in exact.items()}
+    remainder = total - sum(counts.values())
+    # a legnagyobb (lekerekítéssel elveszett) törtrésszel rendelkező betűk
+    # kapják meg a maradék egységeket, hogy az összeg pontosan kijöjjön
+    by_fraction = sorted(LETTER_WEIGHTS, key=lambda letter: exact[letter] - counts[letter], reverse=True)
+    for letter in by_fraction[:remainder]:
+        counts[letter] += 1
+    bag = [letter for letter, count in counts.items() for _ in range(count)]
+    random.shuffle(bag)
+    return bag
