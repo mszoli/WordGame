@@ -11,10 +11,10 @@
         <select id="categorySelect"></select>
 
         <label>Keresés</label>
-        <input type="text" id="searchBox" placeholder="pl. buda...">
+        <input type="text" id="searchBox" placeholder="Kezdj el gépelni a szűréshez...">
 
         <p class="muted" id="wordCount"></p>
-        <div id="wordListBox" style="max-height:60vh; overflow-y:auto; border:1px solid #e2e0d8; border-radius:8px; padding:10px; background:#faf9f5;">
+        <div id="wordListBox" class="word-chip-box" style="max-height:60vh; overflow-y:auto; overflow-x:hidden; border:1px solid #e2e0d8; border-radius:8px; padding:10px; background:#faf9f5;">
         </div>
     </div>
 </div>
@@ -37,7 +37,7 @@ function renderWords(filter) {
         ? allWords.filter((w) => normalize(w).includes(normFilter))
         : allWords;
     document.getElementById("wordCount").textContent = `${filtered.length} / ${allWords.length} szó`;
-    box.innerHTML = filtered.map((w) => `<span class="tile">${w}</span>`).join(" ") ||
+    box.innerHTML = filtered.map((w) => `<span class="word-chip">${w}</span>`).join("") ||
         '<span class="muted">Nincs találat.</span>';
 }
 

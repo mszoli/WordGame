@@ -65,6 +65,24 @@ button:disabled { background: #9ca3af; cursor: not-allowed; }
 }
 .tile.clickable { cursor: pointer; }
 .tile.clickable:hover { background: #fde68a; }
+.word-chip {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    white-space: nowrap;
+    padding: 5px 10px;
+    background: #fef3c7;
+    border: 1px solid #d97706;
+    border-radius: 6px;
+    font-weight: 600;
+    margin: 3px;
+    font-size: 14px;
+}
+.word-chip-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
 .player-list { list-style: none; padding: 0; }
 .player-list li {
     display: flex;
