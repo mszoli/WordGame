@@ -65,10 +65,15 @@ def build_latex(structure: dict) -> str:
     rounds = structure["korok"]
     num_rooms = structure["termek_szama"]
 
+    # lathatatlan "strut"-ok, hogy a cellak tartalma sose erjen hozza
+    # kozvetlenul a felette/alatta levo \hline-hoz
+    tstrut = r"\rule{0pt}{3.4ex}"
+    bstrut = r"\rule[-1.4ex]{0pt}{0pt}"
+
     col_spec = "l" + "c" * len(rounds)
     header_cells = " & ".join(
-        rf"\shortstack{{\textbf{{{r['licit_szam']}. licit}} \\ {ROUND_TYPE_LABEL[r['tipus']]} \\ "
-        rf"(menetrend {r['menetrend_kor']}. köre)}}"
+        rf"\shortstack{{{tstrut}\textbf{{{r['licit_szam']}. licit}} \\ {ROUND_TYPE_LABEL[r['tipus']]} \\ "
+        rf"(menetrend {r['menetrend_kor']}. köre){bstrut}}}"
         for r in rounds
     )
 
@@ -82,9 +87,9 @@ def build_latex(structure: dict) -> str:
             # ket sorban, egyenkent 5 egyseg, hogy a cella kompakt es olvashato maradjon
             row1 = "~".join(escaped[:5])
             row2 = "~".join(escaped[5:])
-            cell = rf"\shortstack{{{row1} \\ {row2}}}"
+            cell = rf"\shortstack{{{tstrut}{row1} \\ {row2}{bstrut}}}"
             cells.append(cell)
-        body_rows.append(f"\\textbf{{{room_num}. terem}} & " + " & ".join(cells) + r" \\ \hline")
+        body_rows.append(f"\\textbf{{{tstrut}{room_num}. terem{bstrut}}} & " + " & ".join(cells) + r" \\ \hline")
 
     body = "\n".join(body_rows)
 
