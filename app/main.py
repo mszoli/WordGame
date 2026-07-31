@@ -27,12 +27,19 @@ DEFAULT_CATEGORY_ORDER = ["Fiú név", "Ország", "Lány név", "Kémiai elemek"
 app = FastAPI(title="Szókirakós Játék")
 
 
-def _default_category_ids() -> list[int]:
+def _order_category_ids(category_ids: list[int]) -> list[int]:
+    """A kapott kategoria-id lista sorrendjet a rogzitett default sorrendhez
+    igazitja (azokra, amik szerepelnek benne), a tobbit a vegere teszi. Ezt
+    mindig lefuttatjuk, mert a index.html form mindig konkret (a checkboxok
+    abc sorrendjebol szarmazo) listat kuld, nem ures listat - igy pusztan
+    az "ha ures, hasznald a defaultot" logika sosem sult volna el a gyakorlatban."""
     cats = db.list_categories()
     by_name = {c["name"]: c["id"] for c in cats}
-    ordered = [by_name[name] for name in DEFAULT_CATEGORY_ORDER if name in by_name]
-    remaining = [c["id"] for c in cats if c["name"] not in DEFAULT_CATEGORY_ORDER]
-    return ordered + remaining
+    known_ordered = [
+        by_name[name] for name in DEFAULT_CATEGORY_ORDER if by_name.get(name) in category_ids
+    ]
+    rest = [cid for cid in category_ids if cid not in known_ordered]
+    return known_ordered + rest
 
 
 @app.on_event("startup")
@@ -120,7 +127,8 @@ def _get_player_or_403(game: Game, token: str | None) -> Player:
 
 @app.post("/api/games")
 def create_game(req: CreateGameRequest):
-    category_ids = req.category_ids or _default_category_ids()
+    category_ids = req.category_ids or [c["id"] for c in db.list_categories()]
+    category_ids = _order_category_ids(category_ids)
     settings = GameSettings(
         num_auctions=req.num_auctions,
         starting_money=req.starting_money,

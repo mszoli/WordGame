@@ -11,6 +11,10 @@ SEED_CATEGORY_FILES = {
     "Ország": "orszagok.txt",
     "Magyar város": "magyar_varosok.txt",
     "Kémiai elemek": "kemiai_elemek.txt",
+    "Olimpiai sportág (2024 nyár / 2026 tél)": "olimpiai_sportok.txt",
+    "Kémiai elem vagy Brawl Stars karakter": "kemiai_elem_vagy_brawl_stars.txt",
+    "Hangszer (klasszikus zeneoktatás)": "hangszerek.txt",
+    "1 milliónál népesebb önálló ország": "orszag_1m_felett.txt",
 }
 
 
