@@ -55,14 +55,18 @@
 async function loadCategories() {
     const box = document.getElementById("categoryList");
     try {
-        const cats = await api("GET", "/api/categories");
+        const [cats, defaults] = await Promise.all([
+            api("GET", "/api/categories"),
+            api("GET", "/api/default-categories"),
+        ]);
         if (cats.length === 0) {
             box.innerHTML = '<span class="muted">Nincs még kategória. <a href="/admin">Hozz létre egyet az admin oldalon</a>.</span>';
             return;
         }
+        const defaultIds = new Set(defaults.map((c) => c.id));
         box.innerHTML = cats.map(c => `
             <label style="font-weight:400;">
-                <input type="checkbox" class="cat-check" value="${c.id}" checked>
+                <input type="checkbox" class="cat-check" value="${c.id}" ${defaultIds.has(c.id) ? "checked" : ""}>
                 ${c.name} <span class="muted">(${c.word_count} szó)</span>
             </label>
         `).join("");

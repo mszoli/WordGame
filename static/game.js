@@ -5,6 +5,7 @@ const app = document.getElementById("app");
 let token = gameId ? getStoredToken(gameId) : null;
 let formRoundKey = null;
 let pollTimer = null;
+let letterTableOpen = false;
 
 function renderJoinForm() {
     app.innerHTML = `<div class="card">
@@ -63,7 +64,7 @@ function renderLetterTable(state) {
         });
         rows += `</tr>`;
     }
-    return `<details style="margin-top:8px;">
+    return `<details id="letterTableDetails" style="margin-top:8px;" ${letterTableOpen ? "open" : ""}>
         <summary style="cursor:pointer; font-weight:600;">Betűs táblázat (előre látható, melyik teremben milyen betűk/betűpárok lesznek)</summary>
         <div style="overflow-x:auto;"><table><tr><th>Terem</th>${headerCells}</tr>${rows}</table></div>
     </details>`;
@@ -110,6 +111,12 @@ function renderHeader(state) {
             } catch (e) {
                 document.getElementById("forceEndError").textContent = e.message;
             }
+        });
+    }
+    const letterTableEl = document.getElementById("letterTableDetails");
+    if (letterTableEl) {
+        letterTableEl.addEventListener("toggle", () => {
+            letterTableOpen = letterTableEl.open;
         });
     }
 }
