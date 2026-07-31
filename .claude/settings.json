@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "defaultMode": "auto",
+    "allow": [
+      "Bash(source .venv/Scripts/activate*)",
+      "Bash(source .venv/bin/activate*)",
+      "Bash(curl -s *)"
+    ]
+  }
+}

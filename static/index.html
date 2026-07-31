@@ -22,25 +22,21 @@
                     <input type="number" id="numAuctions" value="5" min="1" max="10">
                 </div>
                 <div style="flex:1;">
-                    <label>Kezdő pénz</label>
-                    <input type="number" id="startingMoney" value="100" min="1">
+                    <label>Kezdő pénz (zseton)</label>
+                    <input type="number" id="startingMoney" value="20" min="1">
                 </div>
             </div>
             <div class="row">
                 <div style="flex:1;">
-                    <label>Pénz-utánpótlás összege</label>
+                    <label>Pénz-utánpótlás összege (minden szókirakó kör után, az utolsó kivételével)</label>
                     <input type="number" id="refillAmount" value="20" min="0">
                 </div>
-                <div style="flex:1;">
-                    <label>Utánpótlás gyakorisága (körönként)</label>
-                    <input type="number" id="refillInterval" value="5" min="1">
-                </div>
             </div>
-            <p class="muted">Nincs valódi visszaszámláló: minden kört a házigazda zár le egy gombnyomással, ha mindenki készen áll (vagy ha valaki lemaradt).</p>
-            <label>Körök mintázata (vesszővel elválasztva: bid = licit, word = szókirakás)</label>
-            <input type="text" id="roundPattern" value="bid,bid,word">
+            <p class="muted">Nincs valódi visszaszámláló: minden kört a házigazda zár le egy gombnyomással, ha mindenki készen áll (vagy ha valaki lemaradt) - az időzítést egymás közt, manuálisan tartjátok.</p>
+            <label>Körök mintázata (vesszővel elválasztva: bid_single = szimpla betűs licit, bid_double = dupla betűs licit, word = szókirakás)</label>
+            <input type="text" id="roundPattern" value="bid_double,bid_single,word,bid_double,word,bid_double,word,bid_double,word,bid_single,word">
             <label>Mintázat ismétlése</label>
-            <input type="number" id="patternRepeat" value="5" min="1">
+            <input type="number" id="patternRepeat" value="1" min="1">
         </details>
 
         <button id="createBtn">Játék létrehozása</button>
@@ -50,6 +46,7 @@
     <div class="card">
         <p class="muted">Van már meghívó linked? Nyisd meg egyszerűen a kapott linket, ott tudsz csatlakozni névvel.</p>
         <p><a href="/admin">Admin: kategóriák és szólisták kezelése →</a></p>
+        <p><a href="/wordlists">Szólisták böngészése (kategóriánként kereshető) →</a></p>
     </div>
 </div>
 
@@ -88,7 +85,6 @@ document.getElementById("createBtn").addEventListener("click", async () => {
         num_auctions: parseInt(document.getElementById("numAuctions").value, 10),
         starting_money: parseInt(document.getElementById("startingMoney").value, 10),
         refill_amount: parseInt(document.getElementById("refillAmount").value, 10),
-        refill_interval: parseInt(document.getElementById("refillInterval").value, 10),
         round_pattern: document.getElementById("roundPattern").value.split(",").map(s => s.trim()).filter(Boolean),
         pattern_repeat: parseInt(document.getElementById("patternRepeat").value, 10),
         category_ids: categoryIds,

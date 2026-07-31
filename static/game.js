@@ -32,15 +32,41 @@ function renderJoinForm() {
     });
 }
 
+function bidTypeLabel(bidType) {
+    return bidType === "double" ? "Dupla betűs licit" : "Szimpla betűs licit";
+}
+
 function renderRoundSchedule(state) {
     const chips = state.round_schedule
         .map((r, i) => {
-            const label = r.type === "bid" ? "Licit" : `Szó: ${r.category}`;
+            const label = r.type === "bid" ? bidTypeLabel(r.bid_type) : `Szó: ${r.category}`;
             const cls = i === state.round_index ? "turn" : i < state.round_index ? "done" : "wait";
             return `<span class="badge ${cls}">${i + 1}. ${label}</span>`;
         })
         .join(" ");
-    return `<p><strong>Körök sorrendje:</strong></p><div class="row" style="flex-wrap:wrap; gap:4px;">${chips}</div>`;
+    return `<p><strong>Körök sorrendje:</strong></p><div class="row" style="flex-wrap:wrap; gap:4px;">${chips}</div>${renderLetterTable(state)}`;
+}
+
+function renderLetterTable(state) {
+    const bidRounds = state.round_schedule.filter((r) => r.type === "bid");
+    if (bidRounds.length === 0) return "";
+    const maxRooms = Math.max(...bidRounds.map((r) => r.auctions.length));
+    let headerCells = bidRounds
+        .map((r) => `<th>${r.index + 1}.<br>${bidTypeLabel(r.bid_type)}</th>`)
+        .join("");
+    let rows = "";
+    for (let room = 0; room < maxRooms; room++) {
+        rows += `<tr><td><strong>${room + 1}. terem</strong></td>`;
+        bidRounds.forEach((r) => {
+            const units = r.auctions[room] || [];
+            rows += `<td>${units.map((u) => `<span class="tile">${u}</span>`).join(" ")}</td>`;
+        });
+        rows += `</tr>`;
+    }
+    return `<details style="margin-top:8px;">
+        <summary style="cursor:pointer; font-weight:600;">Betűs táblázat (előre látható, melyik teremben milyen betűk/betűpárok lesznek)</summary>
+        <div style="overflow-x:auto;"><table><tr><th>Terem</th>${headerCells}</tr>${rows}</table></div>
+    </details>`;
 }
 
 function renderLastWordResult(state) {
@@ -144,12 +170,13 @@ function renderFinished(state) {
 function buildBidForm(state) {
     const round = state.round;
     const money = state.you.money;
-    let html = `<div class="card"><h3>Licit kör</h3>
+    const unitLabel = round.bid_type === "double" ? "betűpárra" : "betűre";
+    let html = `<div class="card"><h3>${bidTypeLabel(round.bid_type)}</h3>
         <p>Pénzed: <strong>${money}</strong></p>`;
     round.auctions.forEach((a, i) => {
         html += `<div class="auction-card">
             <div>${a.letters.map((l) => `<span class="tile">${l}</span>`).join("")}</div>
-            <label>Licit összeg erre a betűkészletre</label>
+            <label>Licit összeg erre a ${unitLabel}</label>
             <input type="number" min="0" value="${a.your_bid ?? 0}" class="bid-input" data-index="${i}">
         </div>`;
     });
@@ -183,7 +210,7 @@ function patchBidStatus(state) {
 
 function renderBidReveal(state) {
     const round = state.round;
-    let html = `<div class="card"><h3>Licit kör – betűválasztás</h3>`;
+    let html = `<div class="card"><h3>${bidTypeLabel(round.bid_type)} – betűválasztás</h3>`;
     round.auctions.forEach((a, i) => {
         const statusBadge = a.done
             ? '<span class="badge done">Kész</span>'

@@ -33,7 +33,28 @@ def start_game(game: Game) -> None:
         game.players[token].money = game.settings.starting_money
     game.status = "in_progress"
     _assign_round_categories(game)
+    _assign_round_letters(game)
     setup_round(game, 0)
+
+
+BID_ROUND_TYPES = ("bid", "bid_single", "bid_double")
+
+
+def _assign_round_letters(game: Game) -> None:
+    """Minden licit körhöz előre kisorsolja a szobánkénti betűket (vagy
+    dupla licitnél betűpárokat), hogy a teljes 'betűs táblázat' már a játék
+    elején látható legyen mindenki számára, nem csak az adott kör elején."""
+    n_players = len(game.player_order)
+    for index, round_type in enumerate(game.round_sequence):
+        if round_type not in BID_ROUND_TYPES:
+            continue
+        unit_size = 2 if round_type == "bid_double" else 1
+        auctions_letters = []
+        for _ in range(game.settings.num_auctions):
+            raw = draw_letters(n_players * unit_size)
+            units = ["".join(raw[i * unit_size : (i + 1) * unit_size]) for i in range(n_players)]
+            auctions_letters.append(units)
+        game.round_letter_sets[index] = auctions_letters
 
 
 def _assign_round_categories(game: Game) -> None:
@@ -60,7 +81,15 @@ def _round_schedule(game: Game) -> list[dict]:
         if round_type == "word":
             schedule.append({"index": index, "type": "word", "category": game.round_categories.get(index, (0, "?"))[1]})
         else:
-            schedule.append({"index": index, "type": "bid"})
+            bid_type = "double" if round_type == "bid_double" else "single"
+            schedule.append(
+                {
+                    "index": index,
+                    "type": "bid",
+                    "bid_type": bid_type,
+                    "auctions": game.round_letter_sets.get(index, []),
+                }
+            )
     return schedule
 
 
@@ -73,15 +102,19 @@ def _last_word_result(game: Game) -> dict | None:
 
 def setup_round(game: Game, index: int) -> None:
     game.current_round_index = index
-    if index > 0 and game.settings.refill_interval > 0 and index % game.settings.refill_interval == 0:
-        for player in game.players.values():
-            player.money += game.settings.refill_amount
-
     round_type = game.round_sequence[index]
-    if round_type == "bid":
-        n_players = len(game.player_order)
-        auctions = [Auction(letters=draw_letters(n_players)) for _ in range(game.settings.num_auctions)]
-        game.current_round = BidRound(auctions=auctions)
+    if round_type in BID_ROUND_TYPES:
+        bid_type = "double" if round_type == "bid_double" else "single"
+        auctions_letters = game.round_letter_sets.get(index)
+        if auctions_letters is None:
+            n_players = len(game.player_order)
+            unit_size = 2 if bid_type == "double" else 1
+            auctions_letters = [
+                ["".join(draw_letters(unit_size)) for _ in range(n_players)]
+                for _ in range(game.settings.num_auctions)
+            ]
+        auctions = [Auction(letters=units) for units in auctions_letters]
+        game.current_round = BidRound(auctions=auctions, bid_type=bid_type)
     else:
         cat_id, cat_name = game.round_categories.get(index, (0, "?"))
         game.current_round = WordRound(category_id=cat_id, category_name=cat_name)
@@ -94,8 +127,13 @@ def _finish_current_round(game: Game, history_entry: dict) -> None:
     if next_index >= len(game.round_sequence):
         game.status = "finished"
         game.current_round = None
-    else:
-        setup_round(game, next_index)
+        return
+    # Minden szokirako kor utan jar penz-utanpotlas, KIVEVE ha az volt az
+    # utolso kor a jatekban (akkor mar nincs ertelme, a jatek veget ert).
+    if history_entry.get("type") == "word":
+        for player in game.players.values():
+            player.money += game.settings.refill_amount
+    setup_round(game, next_index)
 
 
 def _reveal_bid_round(game: Game, br: BidRound) -> None:
@@ -116,9 +154,12 @@ def _reveal_bid_round(game: Game, br: BidRound) -> None:
 
 
 def _assign_letter(game: Game, auction: Auction, token: str, letter: str) -> None:
+    """A 'letter' egy kirakhato egyseg: 1 karakter szimpla licitnel, 2 karakter
+    (betupar) dupla licitnel - ez utobbinal mindket betu kulon-kulon kerul
+    a jatekos keszletebe, kesobb egymastol fuggetlenul felhasznalhatoak."""
     auction.remaining.remove(letter)
     auction.assigned[token] = letter
-    game.players[token].letters.append(letter)
+    game.players[token].letters.extend(list(letter))
     auction.turn_index += 1
 
 
@@ -140,7 +181,7 @@ def _tick_bid_round(game: Game, br: BidRound) -> None:
         if set(game.player_order) <= br.submitted:
             _reveal_bid_round(game, br)
     if br.money_deducted and br.all_assigned:
-        _finish_current_round(game, {"type": "bid", **_summarize_bid_round(game, br)})
+        _finish_current_round(game, {"type": "bid", "bid_type": br.bid_type, **_summarize_bid_round(game, br)})
 
 
 def can_form_word(letters: list[str], word: str) -> bool:
@@ -200,7 +241,7 @@ def _bot_bid_amounts(game: Game, br: BidRound, player: Player) -> dict[str, int]
     remaining_bid_rounds = sum(
         1
         for i in range(game.current_round_index, len(game.round_sequence))
-        if game.round_sequence[i] == "bid"
+        if game.round_sequence[i] in BID_ROUND_TYPES
     )
     share = player.money / max(1, remaining_bid_rounds)
     budget = max(0, min(int(share * random.uniform(0.4, 1.3)), player.money))
@@ -394,6 +435,7 @@ def serialize_state(game: Game, viewer_token: str | None) -> dict:
         all_revealed = all(a.revealed for a in round_.auctions)
         data["round"] = {
             "type": "bid",
+            "bid_type": round_.bid_type,
             "auctions": auctions_out,
             "revealed": all_revealed,
             "submitted": viewer_token in round_.submitted,

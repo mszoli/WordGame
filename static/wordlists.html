@@ -1,0 +1,64 @@
+<title>Szólisták böngészése</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<div class="container">
+    <h1>Szólisták böngészése</h1>
+    <p class="muted">Ez az oldal független a futó játéktól — csak arra való, hogy előre átnézhessétek egy adott téma teljes szólistáját.</p>
+    <p><a href="/">← Vissza a főoldalra</a></p>
+
+    <div class="card">
+        <label>Témakör</label>
+        <select id="categorySelect"></select>
+
+        <label>Keresés</label>
+        <input type="text" id="searchBox" placeholder="pl. buda...">
+
+        <p class="muted" id="wordCount"></p>
+        <div id="wordListBox" style="max-height:60vh; overflow-y:auto; border:1px solid #e2e0d8; border-radius:8px; padding:10px; background:#faf9f5;">
+        </div>
+    </div>
+</div>
+
+<script src="/static/app.js"></script>
+<script>
+let allWords = [];
+
+function normalize(s) {
+    return s
+        .toUpperCase()
+        .replace(/Á/g, "A").replace(/É/g, "E").replace(/Í/g, "I")
+        .replace(/Ó|Ö|Ő/g, "O").replace(/Ú|Ü|Ű/g, "U");
+}
+
+function renderWords(filter) {
+    const box = document.getElementById("wordListBox");
+    const normFilter = normalize(filter.trim());
+    const filtered = normFilter
+        ? allWords.filter((w) => normalize(w).includes(normFilter))
+        : allWords;
+    document.getElementById("wordCount").textContent = `${filtered.length} / ${allWords.length} szó`;
+    box.innerHTML = filtered.map((w) => `<span class="tile">${w}</span>`).join(" ") ||
+        '<span class="muted">Nincs találat.</span>';
+}
+
+async function loadCategoryWords(categoryId) {
+    const res = await api("GET", `/api/categories/${categoryId}/words`);
+    allWords = res.words;
+    renderWords(document.getElementById("searchBox").value);
+}
+
+async function init() {
+    const select = document.getElementById("categorySelect");
+    const cats = await api("GET", "/api/default-categories");
+    if (cats.length === 0) {
+        select.innerHTML = '<option>Nincs elérhető kategória</option>';
+        return;
+    }
+    select.innerHTML = cats.map((c) => `<option value="${c.id}">${c.name} (${c.word_count} szó)</option>`).join("");
+    select.addEventListener("change", () => loadCategoryWords(select.value));
+    document.getElementById("searchBox").addEventListener("input", (e) => renderWords(e.target.value));
+    await loadCategoryWords(select.value);
+}
+
+init();
+</script>

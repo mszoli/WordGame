@@ -64,6 +64,7 @@ class Auction:
 @dataclass
 class BidRound:
     kind: Literal["bid"] = "bid"
+    bid_type: Literal["single", "double"] = "single"
     auctions: list[Auction] = field(default_factory=list)
     money_deducted: bool = False
     resolved: bool = False
@@ -84,14 +85,28 @@ class WordRound:
     results: dict[str, dict] = field(default_factory=dict)  # token -> {word, valid, points}
 
 
+DEFAULT_ROUND_PATTERN = [
+    "bid_double",
+    "bid_single",
+    "word",
+    "bid_double",
+    "word",
+    "bid_double",
+    "word",
+    "bid_double",
+    "word",
+    "bid_single",
+    "word",
+]
+
+
 @dataclass
 class GameSettings:
     num_auctions: int = 5
-    starting_money: int = 100
-    refill_amount: int = 20
-    refill_interval: int = 5
-    round_pattern: list[str] = field(default_factory=lambda: ["bid", "bid", "word"])
-    pattern_repeat: int = 5  # default: pontosan 5 szokirako kor (a pontozasi keplet ezt felteteli)
+    starting_money: int = 20
+    refill_amount: int = 20  # minden szokirako kor utan jar (kiveve a jatek utolso koret)
+    round_pattern: list[str] = field(default_factory=lambda: list(DEFAULT_ROUND_PATTERN))
+    pattern_repeat: int = 1
     category_ids: list[int] = field(default_factory=list)
 
     def build_round_sequence(self) -> list[str]:
@@ -110,6 +125,7 @@ class Game:
     current_round: Optional[object] = None  # BidRound | WordRound
     round_history: list[dict] = field(default_factory=list)
     round_categories: dict[int, tuple[int, str]] = field(default_factory=dict)  # word round index -> (category_id, name)
+    round_letter_sets: dict[int, list[list[str]]] = field(default_factory=dict)  # bid round index -> per-auction letter units
     created_at: float = field(default_factory=now)
 
     @staticmethod

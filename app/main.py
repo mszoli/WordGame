@@ -22,7 +22,13 @@ from app.store import store
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
 
-DEFAULT_CATEGORY_ORDER = ["Fiú név", "Ország", "Lány név", "Kémiai elemek", "Magyar város"]
+DEFAULT_CATEGORY_ORDER = [
+    "Lány név",
+    "Olimpiai sportág (2024 nyár / 2026 tél)",
+    "Kémiai elem vagy Brawl Stars karakter",
+    "Hangszer (klasszikus zeneoktatás)",
+    "1 milliónál népesebb önálló ország",
+]
 
 app = FastAPI(title="Szókirakós Játék")
 
@@ -66,6 +72,11 @@ def serve_game():
     return FileResponse(STATIC_DIR / "game.html")
 
 
+@app.get("/wordlists")
+def serve_wordlists_page():
+    return FileResponse(STATIC_DIR / "wordlists.html")
+
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -76,6 +87,14 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 @app.get("/api/categories")
 def list_categories():
     return db.list_categories()
+
+
+@app.get("/api/default-categories")
+def list_default_categories():
+    """A jelenlegi default 5 kategoria, a jatekban hasznalt sorrendben -
+    ezt hasznalja a fuggetlen szolista-bongeszo oldal."""
+    by_name = {c["name"]: c for c in db.list_categories()}
+    return [by_name[name] for name in DEFAULT_CATEGORY_ORDER if name in by_name]
 
 
 @app.post("/api/categories")
@@ -133,7 +152,6 @@ def create_game(req: CreateGameRequest):
         num_auctions=req.num_auctions,
         starting_money=req.starting_money,
         refill_amount=req.refill_amount,
-        refill_interval=req.refill_interval,
         round_pattern=req.round_pattern,
         pattern_repeat=req.pattern_repeat,
         category_ids=category_ids,
