@@ -57,17 +57,20 @@ def init_db() -> None:
         )
         conn.commit()
 
-        count = conn.execute("SELECT COUNT(*) AS c FROM categories").fetchone()["c"]
-        if count == 0:
-            for name, filename in SEED_CATEGORY_FILES.items():
-                words = _load_wordlist(filename)
-                cur = conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
-                category_id = cur.lastrowid
-                conn.executemany(
-                    "INSERT OR IGNORE INTO words (category_id, word) VALUES (?, ?)",
-                    [(category_id, w.upper()) for w in words],
-                )
-            conn.commit()
+        existing_names = {
+            row["name"] for row in conn.execute("SELECT name FROM categories").fetchall()
+        }
+        for name, filename in SEED_CATEGORY_FILES.items():
+            if name in existing_names:
+                continue
+            words = _load_wordlist(filename)
+            cur = conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
+            category_id = cur.lastrowid
+            conn.executemany(
+                "INSERT OR IGNORE INTO words (category_id, word) VALUES (?, ?)",
+                [(category_id, w.upper()) for w in words],
+            )
+        conn.commit()
     finally:
         conn.close()
 
