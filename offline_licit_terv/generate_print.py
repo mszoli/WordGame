@@ -23,13 +23,30 @@ from app.letters import hungarian_sort_key  # noqa: E402
 
 ROUND_TYPE_LABEL = {"dupla": "Dupla betűs", "szimpla": "Szimpla betűs"}
 
+# A teljes (licit + szokirakas + szunetek) menetrend, idozitessel - ezt
+# kezzel tartjuk karban, mert az idozitest nem programozzuk bele a
+# jatekba, azt manualisan kovetik a hazigazdak.
+FULL_SCHEDULE = [
+    "felkészülési idő: 12. percig",
+    "(licit: 12-15.perc) dupla betűs licit",
+    "(licit: 18-21.perc) szimpla betűs licit",
+    "(kirakás határideje: 25.perc) 1. szókirakás",
+    "(licit: 28-31.perc) dupla betűs licit",
+    "(kirakás határideje: 35.perc) 2. szókirakás",
+    "taktikai szünet 35-40. perc",
+    "(licit: 43-46.perc) dupla betűs licit",
+    "(kirakás határideje: 50.perc) 3. szókirakás",
+    "(licit: 53-56.perc) szimpla betűs licit",
+    "(kirakás határideje: 60.perc) 4. szókirakás",
+]
+
 
 def load_structure(output_dir: Path) -> dict:
     with open(output_dir / "licit_menetrend.json", encoding="utf-8") as f:
         return json.load(f)
 
 
-def build_markdown(structure: dict) -> str:
+def build_markdown(structure: dict, room_labels: list[str]) -> str:
     lines = []
     lines.append("# Licitálós Szókirakós — teljes licit-menetrend")
     lines.append("")
@@ -54,9 +71,16 @@ def build_markdown(structure: dict) -> str:
         lines.append("| Terem | Betűk (licitálható egységek) |")
         lines.append("|---|---|")
         for room in rnd["termek"]:
+            label = room_labels[room["terem"] - 1]
             units = sorted(room["betuk"], key=hungarian_sort_key)
-            lines.append(f"| {room['terem']}. terem | {' · '.join(units)} |")
+            lines.append(f"| {label}. terem | {' · '.join(units)} |")
         lines.append("")
+
+    lines.append("## Teljes menetrend")
+    lines.append("")
+    for i, item in enumerate(FULL_SCHEDULE, start=1):
+        lines.append(f"{i}. {item}")
+    lines.append("")
 
     return "\n".join(lines)
 
@@ -65,7 +89,7 @@ def escape_latex(s: str) -> str:
     return s.replace("&", r"\&").replace("%", r"\%").replace("#", r"\#")
 
 
-def build_latex(structure: dict) -> str:
+def build_latex(structure: dict, room_labels: list[str]) -> str:
     rounds = structure["korok"]
     num_rooms = structure["termek_szama"]
 
@@ -86,7 +110,7 @@ def build_latex(structure: dict) -> str:
 
     body_rows = []
     for room_idx in range(num_rooms):
-        room_num = room_idx + 1
+        room_label = escape_latex(room_labels[room_idx])
         cells = []
         for rnd in rounds:
             units = sorted(rnd["termek"][room_idx]["betuk"], key=hungarian_sort_key)
@@ -96,15 +120,19 @@ def build_latex(structure: dict) -> str:
             row2 = "~".join(escaped[5:])
             cell = rf"\shortstack{{{tstrut}{row1} \\ {row2}{bstrut}}}"
             cells.append(cell)
-        body_rows.append(f"\\textbf{{{tstrut}{room_num}. terem{bstrut}}} & " + " & ".join(cells) + r" \\ \hline")
+        body_rows.append(f"\\textbf{{{tstrut}{room_label}. terem{bstrut}}} & " + " & ".join(cells) + r" \\ \hline")
 
     body = "\n".join(body_rows)
+
+    schedule_items = "\n".join(rf"\item {escape_latex(item)}" for item in FULL_SCHEDULE)
 
     tex = rf"""\documentclass[11pt]{{extarticle}}
 \usepackage{{fontspec}}
 \usepackage[a4paper,landscape,margin=1.1cm]{{geometry}}
 \usepackage{{array}}
 \usepackage{{longtable}}
+\usepackage{{multicol}}
+\usepackage{{enumitem}}
 \renewcommand{{\arraystretch}}{{2.2}}
 \setlength{{\tabcolsep}}{{12pt}}
 \pagestyle{{empty}}
@@ -129,6 +157,14 @@ def build_latex(structure: dict) -> str:
 önálló betű) látható, ábécésorrendben. A licit lezárása után a legtöbbet fizető választ
 elsőként az adott terem egységei közül, utána a második legtöbbet fizető, stb. -- holtverseny
 esetén a választás sorrendjét a teremben sorsolják.}}
+
+\vspace{{10pt}}
+{{\large \textbf{{Teljes menetrend}}}}
+\begin{{multicols}}{{2}}
+\begin{{enumerate}}[itemsep=2pt, topsep=4pt]
+{schedule_items}
+\end{{enumerate}}
+\end{{multicols}}
 
 \end{{document}}
 """
@@ -156,17 +192,19 @@ def compile_pdf(tex_path: Path) -> bool:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default="output")
+    parser.add_argument("--rooms", default="1,2,3,4,5")
     args = parser.parse_args()
     output_dir = BASE_DIR / args.output_dir
+    room_labels = [r.strip() for r in args.rooms.split(",")]
 
     structure = load_structure(output_dir)
 
-    md = build_markdown(structure)
+    md = build_markdown(structure, room_labels)
     md_path = output_dir / "licit_menetrend.md"
     md_path.write_text(md, encoding="utf-8")
     print(f"Kesz: {md_path}")
 
-    tex = build_latex(structure)
+    tex = build_latex(structure, room_labels)
     tex_path = output_dir / "licit_menetrend.tex"
     tex_path.write_text(tex, encoding="utf-8")
     print(f"Kesz: {tex_path}")
