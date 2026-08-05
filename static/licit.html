@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Licit sorrend</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f2ec;
+        color: #2a2a2a;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 480px;
+        margin: 0 auto;
+    }
+    h1 {
+        font-size: 1.6em;
+        text-align: center;
+        margin-bottom: 4px;
+    }
+    p.hint {
+        text-align: center;
+        color: #666;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 0.95em;
+    }
+    .card {
+        background: #fff;
+        border: 1px solid #ddd8c9;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 20px;
+    }
+    .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        gap: 12px;
+    }
+    .row:last-child { border-bottom: none; }
+    .row label {
+        font-size: 1.3em;
+        font-weight: bold;
+        min-width: 70px;
+    }
+    .row input {
+        flex: 1;
+        font-size: 1.4em;
+        padding: 8px 10px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        text-align: right;
+        width: 100%;
+        max-width: 160px;
+    }
+    .row input:focus {
+        border-color: #6b8f3a;
+        outline: none;
+    }
+    .buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    button {
+        flex: 1;
+        font-size: 1.3em;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    #calcBtn {
+        background: #6b8f3a;
+        color: #fff;
+    }
+    #calcBtn:active { background: #567530; }
+    #resetBtn {
+        background: #ccc;
+        color: #2a2a2a;
+    }
+    #resetBtn:active { background: #b5b5b5; }
+    #results {
+        display: none;
+    }
+    #results h2 {
+        font-size: 1.3em;
+        margin-top: 0;
+    }
+    .result-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 1.3em;
+    }
+    .result-row:last-child { border-bottom: none; }
+    .rank {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #6b8f3a;
+        min-width: 34px;
+    }
+    .result-name {
+        font-weight: bold;
+        min-width: 70px;
+    }
+    .result-bid {
+        margin-left: auto;
+        color: #444;
+    }
+    .tie-note {
+        font-size: 0.8em;
+        color: #b05a00;
+        font-weight: normal;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Licit sorrend</h1>
+    <p class="hint">Írd be minden csapat licitjét, majd nyomd meg a gombot. Egyenlő licit esetén automatikusan sorsol.</p>
+
+    <div class="card" id="inputCard"></div>
+
+    <div class="buttons">
+        <button id="calcBtn" type="button">Sorrend kiszámítása</button>
+        <button id="resetBtn" type="button">Törlés</button>
+    </div>
+
+    <div class="card" id="results">
+        <h2>Választási sorrend</h2>
+        <div id="resultList"></div>
+    </div>
+</div>
+
+<script>
+    var TEAMS = ["AA", "BB", "DD", "EE", "FF", "KK", "LL", "PP", "SS", "SzSz"];
+
+    function buildInputs() {
+        var card = document.getElementById("inputCard");
+        var html = "";
+        for (var i = 0; i < TEAMS.length; i++) {
+            html += '<div class="row">'
+                + '<label for="bid' + i + '">' + TEAMS[i] + '</label>'
+                + '<input type="number" inputmode="numeric" min="0" step="1" id="bid' + i + '" placeholder="0">'
+                + '</div>';
+        }
+        card.innerHTML = html;
+    }
+
+    function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    function calculate() {
+        var entries = [];
+        for (var i = 0; i < TEAMS.length; i++) {
+            var raw = document.getElementById("bid" + i).value;
+            var bid = parseInt(raw, 10);
+            if (isNaN(bid) || bid < 0) bid = 0;
+            entries.push({ name: TEAMS[i], bid: bid });
+        }
+
+        shuffle(entries);
+        entries.sort(function (a, b) { return b.bid - a.bid; });
+
+        var bidCounts = {};
+        for (var i = 0; i < entries.length; i++) {
+            bidCounts[entries[i].bid] = (bidCounts[entries[i].bid] || 0) + 1;
+        }
+
+        var listHtml = "";
+        for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            var tied = bidCounts[e.bid] > 1;
+            listHtml += '<div class="result-row">'
+                + '<span class="rank">' + (i + 1) + '.</span>'
+                + '<span class="result-name">' + e.name + '</span>'
+                + (tied ? '<span class="tie-note">(sorsolás)</span>' : '')
+                + '<span class="result-bid">' + e.bid + '</span>'
+                + '</div>';
+        }
+        document.getElementById("resultList").innerHTML = listHtml;
+        document.getElementById("results").style.display = "block";
+    }
+
+    function reset() {
+        for (var i = 0; i < TEAMS.length; i++) {
+            document.getElementById("bid" + i).value = "";
+        }
+        document.getElementById("results").style.display = "none";
+        document.getElementById("bid0").focus();
+    }
+
+    buildInputs();
+    document.getElementById("calcBtn").addEventListener("click", calculate);
+    document.getElementById("resetBtn").addEventListener("click", reset);
+
+    var firstInput = document.getElementById("bid0");
+    if (firstInput) firstInput.focus();
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && document.activeElement && document.activeElement.tagName === "INPUT") {
+            var idx = TEAMS.findIndex(function (name, i) { return document.activeElement.id === "bid" + i; });
+            var next = document.getElementById("bid" + (idx + 1));
+            if (next) {
+                next.focus();
+            } else {
+                calculate();
+            }
+        }
+    });
+</script>
+</body>
+</html>

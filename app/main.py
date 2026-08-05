@@ -77,6 +77,11 @@ def serve_wordlists_page():
     return FileResponse(STATIC_DIR / "wordlists.html")
 
 
+@app.get("/licit")
+def serve_licit_page():
+    return FileResponse(STATIC_DIR / "licit.html")
+
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
