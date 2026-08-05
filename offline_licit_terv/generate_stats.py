@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.letters import LETTER_WEIGHTS  # noqa: E402
+from app.letters import LETTER_WEIGHTS, hungarian_sort_key  # noqa: E402
 
 
 def main() -> None:
@@ -44,7 +44,7 @@ def main() -> None:
     lines.append(f"{'Betű':<6}{'Súly':>6}{'Várható':>12}{'Tényleges':>12}{'Eltérés':>10}")
     lines.append("-" * 60)
 
-    for letter in sorted(LETTER_WEIGHTS, key=lambda l: (-LETTER_WEIGHTS[l], l)):
+    for letter in sorted(LETTER_WEIGHTS, key=lambda l: (-LETTER_WEIGHTS[l], hungarian_sort_key(l))):
         weight = LETTER_WEIGHTS[letter]
         expected = total * weight / total_weight
         actual = counts.get(letter, 0)

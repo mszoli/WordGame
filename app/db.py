@@ -2,6 +2,8 @@ import sqlite3
 from pathlib import Path
 from typing import Optional
 
+from app.letters import hungarian_sort_key
+
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "wordgame.db"
 WORDLIST_DIR = Path(__file__).resolve().parent.parent / "wordlists"
 
@@ -26,11 +28,17 @@ def _load_wordlist(filename: str) -> list[str]:
         return [line.strip() for line in f if line.strip()]
 
 
+def _hungarian_collation(a: str, b: str) -> int:
+    ka, kb = hungarian_sort_key(a), hungarian_sort_key(b)
+    return -1 if ka < kb else (1 if ka > kb else 0)
+
+
 def _connect() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.create_collation("HUNGARIAN", _hungarian_collation)
     return conn
 
 
@@ -84,7 +92,7 @@ def list_categories() -> list[dict]:
             FROM categories c
             LEFT JOIN words w ON w.category_id = c.id
             GROUP BY c.id
-            ORDER BY c.name COLLATE NOCASE
+            ORDER BY c.name COLLATE HUNGARIAN
             """
         ).fetchall()
         return [dict(r) for r in rows]
@@ -138,7 +146,7 @@ def get_words(category_id: int) -> list[str]:
     conn = _connect()
     try:
         rows = conn.execute(
-            "SELECT word FROM words WHERE category_id = ? ORDER BY word", (category_id,)
+            "SELECT word FROM words WHERE category_id = ? ORDER BY word COLLATE HUNGARIAN", (category_id,)
         ).fetchall()
         return [r["word"] for r in rows]
     finally:

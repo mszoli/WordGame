@@ -17,6 +17,26 @@ LETTER_WEIGHTS: dict[str, int] = {
 # lennének. "W", "X" és "Q" csak néhány idegen eredetű szóhoz/névhez kell
 # (pl. "Botswana", "Xenon", "Squeak"), ezért nagyon alacsony súllyal.
 
+# A helyes magyar ábécésorrend (az ékezetes betűk az alapbetűjük UTÁN
+# következnek, nem a lista végén) - Python/SQLite alapból kódpont szerint
+# rendez, ami az ékezetes betűket (magasabb Unicode-értékük miatt) a Z
+# utánra sorolná, ami magyar szövegnél helytelen.
+HUNGARIAN_ALPHABET_ORDER = [
+    "A", "Á", "B", "C", "D", "E", "É", "F", "G", "H", "I", "Í", "J", "K", "L",
+    "M", "N", "O", "Ó", "Ö", "Ő", "P", "Q", "R", "S", "T", "U", "Ú", "Ü", "Ű",
+    "V", "W", "X", "Y", "Z",
+]
+_HUNGARIAN_ORDER_INDEX = {ch: i for i, ch in enumerate(HUNGARIAN_ALPHABET_ORDER)}
+
+
+def hungarian_sort_key(text: str) -> tuple[int, ...]:
+    """Rendezési kulcs magyar ábécé szerinti sorbarendezéshez (betűkre,
+    betűpárokra és teljes szavakra egyaránt hasznalhato). Ismeretlen
+    karakterek (szamok, ekezet nelkuli idegen betuk stb.) a magyar
+    abece utan, kodpont szerint kerulnek."""
+    return tuple(_HUNGARIAN_ORDER_INDEX.get(ch, 1000 + ord(ch)) for ch in text.upper())
+
+
 def apportion_letters(total: int) -> list[str]:
     """A megadott összdarabszámra előre, egyszerre kiszámolja a súlyok szerint
     pontosan hány darab legyen az egyes betűkből (legnagyobb maradék /

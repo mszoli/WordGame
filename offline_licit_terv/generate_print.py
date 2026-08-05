@@ -16,6 +16,10 @@ import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from app.letters import hungarian_sort_key  # noqa: E402
 
 ROUND_TYPE_LABEL = {"dupla": "Dupla betűs", "szimpla": "Szimpla betűs"}
 
@@ -50,7 +54,7 @@ def build_markdown(structure: dict) -> str:
         lines.append("| Terem | Betűk (licitálható egységek) |")
         lines.append("|---|---|")
         for room in rnd["termek"]:
-            units = sorted(room["betuk"])
+            units = sorted(room["betuk"], key=hungarian_sort_key)
             lines.append(f"| {room['terem']}. terem | {' · '.join(units)} |")
         lines.append("")
 
@@ -85,7 +89,7 @@ def build_latex(structure: dict) -> str:
         room_num = room_idx + 1
         cells = []
         for rnd in rounds:
-            units = sorted(rnd["termek"][room_idx]["betuk"])
+            units = sorted(rnd["termek"][room_idx]["betuk"], key=hungarian_sort_key)
             escaped = [escape_latex(u) for u in units]
             # ket sorban, egyenkent 5 egyseg, hogy a cella kompakt es olvashato maradjon
             row1 = "~".join(escaped[:5])

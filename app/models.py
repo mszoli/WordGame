@@ -6,6 +6,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 
+from app.letters import hungarian_sort_key
+
 
 def now() -> float:
     return time.time()
@@ -33,7 +35,7 @@ class Player:
             "letter_count": len(self.letters),
         }
         if viewer_token == self.token:
-            d["letters"] = sorted(self.letters)
+            d["letters"] = sorted(self.letters, key=hungarian_sort_key)
         return d
 
 

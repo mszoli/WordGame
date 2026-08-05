@@ -4,7 +4,7 @@ import random
 from collections import Counter
 
 from app import db
-from app.letters import apportion_letters
+from app.letters import apportion_letters, hungarian_sort_key
 from app.models import Auction, BidRound, Game, Player, WordRound
 
 
@@ -418,7 +418,7 @@ def serialize_state(game: Game, viewer_token: str | None) -> dict:
                 "is_host": me.is_host,
                 "money": me.money,
                 "score": me.score,
-                "letters": sorted(me.letters),
+                "letters": sorted(me.letters, key=hungarian_sort_key),
             }
             if me
             else None
