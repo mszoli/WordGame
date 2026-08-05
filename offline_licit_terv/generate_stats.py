@@ -4,8 +4,9 @@ arrol, hogy osszesen hanyszor szerepel az egesz menetrendben az egyes betuk
 mindegyike - ellenorzeskepp, hogy az osszeg valoban annyi, amennyinek lennie
 kell (10 csapat x 10 betu/csapat/terem x 5 terem = 500).
 
-Kimenet: output/betu_statisztika.txt
+Kimenet: <output-dir>/betu_statisztika.txt
 """
+import argparse
 import json
 import sys
 from collections import Counter
@@ -17,11 +18,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.letters import LETTER_WEIGHTS  # noqa: E402
 
-OUTPUT_DIR = BASE_DIR / "output"
-
 
 def main() -> None:
-    with open(OUTPUT_DIR / "licit_menetrend.json", encoding="utf-8") as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", default="output")
+    args = parser.parse_args()
+    output_dir = BASE_DIR / args.output_dir
+
+    with open(output_dir / "licit_menetrend.json", encoding="utf-8") as f:
         structure = json.load(f)
 
     counts = Counter()
@@ -50,10 +54,11 @@ def main() -> None:
     lines.append("-" * 60)
     lines.append(f"{'ÖSSZESEN':<6}{'':>6}{'':>12}{total:>12d}")
     lines.append("")
-    expected_total = structure["csapatok_szama"] * structure["termek_szama"] * 10
+    betu_per_csapat_per_terem = sum(2 if r["tipus"] == "dupla" else 1 for r in structure["korok"])
+    expected_total = structure["csapatok_szama"] * structure["termek_szama"] * betu_per_csapat_per_terem
     lines.append(
         f"Ellenőrzés: {structure['csapatok_szama']} csapat x {structure['termek_szama']} terem x "
-        f"10 betű/csapat/terem = {expected_total} → tényleges összeg: {total} "
+        f"{betu_per_csapat_per_terem} betű/csapat/terem = {expected_total} → tényleges összeg: {total} "
         f"({'OK, egyezik' if total == expected_total else 'ELTÉRÉS, ELLENŐRIZD!'})"
     )
 
@@ -63,7 +68,7 @@ def main() -> None:
         "Hiányzó betűk (0x fordul elő): " + (", ".join(missing) if missing else "nincs - mind a 34 betű szerepel")
     )
 
-    out_path = OUTPUT_DIR / "betu_statisztika.txt"
+    out_path = output_dir / "betu_statisztika.txt"
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 

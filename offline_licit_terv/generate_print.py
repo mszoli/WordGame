@@ -8,6 +8,7 @@ Kimenet:
   output/licit_menetrend.tex
   output/licit_menetrend.pdf
 """
+import argparse
 import json
 import shutil
 import subprocess
@@ -15,13 +16,12 @@ import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-OUTPUT_DIR = BASE_DIR / "output"
 
 ROUND_TYPE_LABEL = {"dupla": "Dupla betűs", "szimpla": "Szimpla betűs"}
 
 
-def load_structure() -> dict:
-    with open(OUTPUT_DIR / "licit_menetrend.json", encoding="utf-8") as f:
+def load_structure(output_dir: Path) -> dict:
+    with open(output_dir / "licit_menetrend.json", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -36,16 +36,16 @@ def build_markdown(structure: dict) -> str:
     lines.append("")
     lines.append(
         f"{structure['csapatok_szama']} csapat, {structure['termek_szama']} terem/licit, "
-        "6 licit kör a teljes menetrendben."
+        f"{len(structure['korok'])} licit kör."
     )
     lines.append("")
 
     for rnd in structure["korok"]:
         type_label = ROUND_TYPE_LABEL[rnd["tipus"]]
-        lines.append(
-            f"## {rnd['licit_szam']}. licit — {type_label} "
-            f"(a teljes menetrend {rnd['menetrend_kor']}. köre)"
-        )
+        cim = f"## {rnd['licit_szam']}. licit kör — {type_label}"
+        if rnd.get("menetrend_kor") is not None:
+            cim += f" (a teljes menetrend {rnd['menetrend_kor']}. köre)"
+        lines.append(cim)
         lines.append("")
         lines.append("| Terem | Betűk (licitálható egységek) |")
         lines.append("|---|---|")
@@ -71,11 +71,14 @@ def build_latex(structure: dict) -> str:
     bstrut = r"\rule[-1.4ex]{0pt}{0pt}"
 
     col_spec = "l" + "c" * len(rounds)
-    header_cells = " & ".join(
-        rf"\shortstack{{{tstrut}\textbf{{{r['licit_szam']}. licit}} \\ {ROUND_TYPE_LABEL[r['tipus']]} \\ "
-        rf"(menetrend {r['menetrend_kor']}. köre){bstrut}}}"
-        for r in rounds
-    )
+
+    def header_cell(r: dict) -> str:
+        lines = [rf"\textbf{{{r['licit_szam']}. licit kör}}", ROUND_TYPE_LABEL[r["tipus"]]]
+        if r.get("menetrend_kor") is not None:
+            lines.append(f"(menetrend {r['menetrend_kor']}. köre)")
+        return rf"\shortstack{{{tstrut}" + r" \\ ".join(lines) + rf"{bstrut}}}"
+
+    header_cells = " & ".join(header_cell(r) for r in rounds)
 
     body_rows = []
     for room_idx in range(num_rooms):
@@ -147,20 +150,25 @@ def compile_pdf(tex_path: Path) -> bool:
 
 
 def main() -> None:
-    structure = load_structure()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", default="output")
+    args = parser.parse_args()
+    output_dir = BASE_DIR / args.output_dir
+
+    structure = load_structure(output_dir)
 
     md = build_markdown(structure)
-    md_path = OUTPUT_DIR / "licit_menetrend.md"
+    md_path = output_dir / "licit_menetrend.md"
     md_path.write_text(md, encoding="utf-8")
     print(f"Kesz: {md_path}")
 
     tex = build_latex(structure)
-    tex_path = OUTPUT_DIR / "licit_menetrend.tex"
+    tex_path = output_dir / "licit_menetrend.tex"
     tex_path.write_text(tex, encoding="utf-8")
     print(f"Kesz: {tex_path}")
 
     if compile_pdf(tex_path):
-        print(f"Kesz: {OUTPUT_DIR / 'licit_menetrend.pdf'}")
+        print(f"Kesz: {output_dir / 'licit_menetrend.pdf'}")
         # takaritas: latex mellektermekek torlese
         for ext in (".aux", ".log", ".out"):
             p = tex_path.with_suffix(ext)

@@ -1,0 +1,418 @@
+{
+  "seed": 424242,
+  "csapatok_szama": 10,
+  "termek_szama": 5,
+  "osszes_betu": 400,
+  "korok": [
+    {
+      "licit_szam": 1,
+      "menetrend_kor": null,
+      "tipus": "dupla",
+      "termek": [
+        {
+          "terem": 1,
+          "betuk": [
+            "ÍL",
+            "ŐŐ",
+            "ÁF",
+            "ÖN",
+            "MJ",
+            "IA",
+            "EA",
+            "NL",
+            "SA",
+            "YÁ"
+          ]
+        },
+        {
+          "terem": 2,
+          "betuk": [
+            "AI",
+            "AY",
+            "YE",
+            "RT",
+            "MP",
+            "US",
+            "BÁ",
+            "ZA",
+            "ÁV",
+            "AA"
+          ]
+        },
+        {
+          "terem": 3,
+          "betuk": [
+            "KA",
+            "SG",
+            "ET",
+            "NN",
+            "LR",
+            "YO",
+            "ÁH",
+            "EY",
+            "GK",
+            "ÁA"
+          ]
+        },
+        {
+          "terem": 4,
+          "betuk": [
+            "ÜZ",
+            "TE",
+            "AB",
+            "UA",
+            "SÚ",
+            "TR",
+            "NK",
+            "RA",
+            "LE",
+            "AL"
+          ]
+        },
+        {
+          "terem": 5,
+          "betuk": [
+            "YS",
+            "YH",
+            "RS",
+            "TN",
+            "CA",
+            "AM",
+            "AE",
+            "EY",
+            "BK",
+            "DL"
+          ]
+        }
+      ]
+    },
+    {
+      "licit_szam": 2,
+      "menetrend_kor": null,
+      "tipus": "szimpla",
+      "termek": [
+        {
+          "terem": 1,
+          "betuk": [
+            "H",
+            "Z",
+            "Á",
+            "Ö",
+            "L",
+            "P",
+            "Ő",
+            "H",
+            "N",
+            "V"
+          ]
+        },
+        {
+          "terem": 2,
+          "betuk": [
+            "Q",
+            "S",
+            "Z",
+            "Ő",
+            "M",
+            "L",
+            "É",
+            "Y",
+            "U",
+            "É"
+          ]
+        },
+        {
+          "terem": 3,
+          "betuk": [
+            "O",
+            "S",
+            "R",
+            "K",
+            "G",
+            "Y",
+            "E",
+            "W",
+            "Z",
+            "I"
+          ]
+        },
+        {
+          "terem": 4,
+          "betuk": [
+            "Y",
+            "E",
+            "Y",
+            "A",
+            "N",
+            "G",
+            "A",
+            "E",
+            "E",
+            "M"
+          ]
+        },
+        {
+          "terem": 5,
+          "betuk": [
+            "N",
+            "O",
+            "L",
+            "S",
+            "I",
+            "Ó",
+            "N",
+            "A",
+            "E",
+            "K"
+          ]
+        }
+      ]
+    },
+    {
+      "licit_szam": 3,
+      "menetrend_kor": null,
+      "tipus": "dupla",
+      "termek": [
+        {
+          "terem": 1,
+          "betuk": [
+            "XJ",
+            "ŰÉ",
+            "ÜP",
+            "NS",
+            "ÁV",
+            "OY",
+            "ÉK",
+            "MG",
+            "MY",
+            "ÓL"
+          ]
+        },
+        {
+          "terem": 2,
+          "betuk": [
+            "HÉ",
+            "GÚ",
+            "SG",
+            "CL",
+            "HÁ",
+            "NS",
+            "ÜH",
+            "IC",
+            "KR",
+            "OU"
+          ]
+        },
+        {
+          "terem": 3,
+          "betuk": [
+            "ÍY",
+            "TE",
+            "EE",
+            "JI",
+            "ÖI",
+            "ÉC",
+            "QK",
+            "MD",
+            "XE",
+            "DK"
+          ]
+        },
+        {
+          "terem": 4,
+          "betuk": [
+            "ÍP",
+            "BX",
+            "ÁS",
+            "TT",
+            "HM",
+            "VJ",
+            "TO",
+            "EÁ",
+            "ÁZ",
+            "TM"
+          ]
+        },
+        {
+          "terem": 5,
+          "betuk": [
+            "ET",
+            "YB",
+            "LP",
+            "ŰE",
+            "EV",
+            "FE",
+            "ŰB",
+            "PE",
+            "KE",
+            "RI"
+          ]
+        }
+      ]
+    },
+    {
+      "licit_szam": 4,
+      "menetrend_kor": null,
+      "tipus": "dupla",
+      "termek": [
+        {
+          "terem": 1,
+          "betuk": [
+            "ŰG",
+            "FA",
+            "EO",
+            "GÁ",
+            "ZJ",
+            "AE",
+            "AO",
+            "AT",
+            "DM",
+            "QT"
+          ]
+        },
+        {
+          "terem": 2,
+          "betuk": [
+            "AA",
+            "ÉV",
+            "IE",
+            "OO",
+            "ÖÓ",
+            "OR",
+            "JÓ",
+            "ÖA",
+            "LX",
+            "GA"
+          ]
+        },
+        {
+          "terem": 3,
+          "betuk": [
+            "OA",
+            "ED",
+            "SK",
+            "GN",
+            "ÚT",
+            "TO",
+            "AH",
+            "IS",
+            "BÉ",
+            "YD"
+          ]
+        },
+        {
+          "terem": 4,
+          "betuk": [
+            "NE",
+            "KI",
+            "EY",
+            "RJ",
+            "ÁA",
+            "BV",
+            "GW",
+            "AK",
+            "AZ",
+            "ÁO"
+          ]
+        },
+        {
+          "terem": 5,
+          "betuk": [
+            "ÖE",
+            "LB",
+            "ÍF",
+            "TA",
+            "ÖK",
+            "AÁ",
+            "KN",
+            "ES",
+            "RD",
+            "VT"
+          ]
+        }
+      ]
+    },
+    {
+      "licit_szam": 5,
+      "menetrend_kor": null,
+      "tipus": "szimpla",
+      "termek": [
+        {
+          "terem": 1,
+          "betuk": [
+            "E",
+            "W",
+            "A",
+            "Y",
+            "L",
+            "É",
+            "Y",
+            "O",
+            "Ö",
+            "E"
+          ]
+        },
+        {
+          "terem": 2,
+          "betuk": [
+            "K",
+            "D",
+            "R",
+            "Y",
+            "Ü",
+            "Á",
+            "M",
+            "P",
+            "R",
+            "N"
+          ]
+        },
+        {
+          "terem": 3,
+          "betuk": [
+            "A",
+            "V",
+            "S",
+            "E",
+            "E",
+            "A",
+            "M",
+            "I",
+            "Ú",
+            "Y"
+          ]
+        },
+        {
+          "terem": 4,
+          "betuk": [
+            "O",
+            "E",
+            "Z",
+            "N",
+            "P",
+            "L",
+            "J",
+            "L",
+            "Q",
+            "P"
+          ]
+        },
+        {
+          "terem": 5,
+          "betuk": [
+            "D",
+            "E",
+            "J",
+            "A",
+            "G",
+            "Ö",
+            "W",
+            "I",
+            "E",
+            "O"
+          ]
+        }
+      ]
+    }
+  ]
+}

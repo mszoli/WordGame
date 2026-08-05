@@ -19,8 +19,6 @@ import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-OUTPUT_DIR = BASE_DIR / "output"
-OUTPUT_DIR.mkdir(exist_ok=True)
 
 COLS = 5
 ROWS = 5
@@ -117,12 +115,12 @@ def compile_pdf(tex_path: Path) -> bool:
     return True
 
 
-def load_all_letters() -> list[str]:
-    """A licit_menetrend.json-ban mar rogzitett (seed: 424242) teljes
-    betukeszletet egyetlen, 500 elemu listava lapitja (minden betupar
-    2 kulon beture bontva) - igy a kivagando csempek pontosan ugyanazt
-    az 500 betut tartalmazzak, mint a nyomtatott menetrend-tablazat."""
-    menetrend_path = OUTPUT_DIR / "licit_menetrend.json"
+def load_all_letters(output_dir: Path) -> list[str]:
+    """A licit_menetrend.json-ban mar rogzitett teljes betukeszletet egyetlen
+    listava lapitja (minden betupar 2 kulon beture bontva) - igy a kivagando
+    csempek pontosan ugyanazt a betukeszletet tartalmazzak, mint a
+    nyomtatott menetrend-tablazat."""
+    menetrend_path = output_dir / "licit_menetrend.json"
     if not menetrend_path.exists():
         print(f"HIBA: {menetrend_path} nem talalhato - eloszor futtasd le a generate_structure.py-t.")
         sys.exit(1)
@@ -139,7 +137,10 @@ def load_all_letters() -> list[str]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sample", action="store_true", help="csak egy mintaoldal teszt-betukkel")
+    parser.add_argument("--output-dir", default="output")
     args = parser.parse_args()
+    output_dir = BASE_DIR / args.output_dir
+    output_dir.mkdir(exist_ok=True)
 
     if args.sample:
         sample_letters = ["A", "Á", "B", "C", "D", "E", "É", "F", "G", "H",
@@ -148,7 +149,7 @@ def main() -> None:
         pages = [sample_letters]
         out_name = "betu_lapok_minta"
     else:
-        letters = load_all_letters()
+        letters = load_all_letters(output_dir)
         per_page = COLS * ROWS
         if len(letters) % per_page != 0:
             print(f"FIGYELEM: {len(letters)} betu nem oszthato {per_page}-tel maradek nelkul.")
@@ -158,12 +159,12 @@ def main() -> None:
         print(f"Osszes betu: {len(letters)}, oldalak szama: {num_pages} (egyenkent {per_page} betu)")
 
     tex = build_document(pages)
-    tex_path = OUTPUT_DIR / f"{out_name}.tex"
+    tex_path = output_dir / f"{out_name}.tex"
     tex_path.write_text(tex, encoding="utf-8")
     print(f"Kesz: {tex_path}")
 
     if compile_pdf(tex_path):
-        print(f"Kesz: {OUTPUT_DIR / (out_name + '.pdf')}")
+        print(f"Kesz: {output_dir / (out_name + '.pdf')}")
     else:
         sys.exit(1)
 

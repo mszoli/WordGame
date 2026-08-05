@@ -2,9 +2,9 @@
 
 *(seed: 424242 — ugyanezzel a seeddel újra legenerálva mindig ugyanez jön ki, tehát ez a végleges, rögzített menetrend)*
 
-10 csapat, 5 terem/licit, 6 licit kör a teljes menetrendben.
+10 csapat, 5 terem/licit, 6 licit kör.
 
-## 1. licit — Dupla betűs (a teljes menetrend 1. köre)
+## 1. licit kör — Dupla betűs (a teljes menetrend 1. köre)
 
 | Terem | Betűk (licitálható egységek) |
 |---|---|
@@ -14,7 +14,7 @@
 | 4. terem | CM · DI · HH · KO · KV · LÖ · NM · VI · ÁJ · ÁN |
 | 5. terem | AR · AÁ · AÁ · GU · JL · KT · KÉ · NW · OA · XD |
 
-## 2. licit — Szimpla betűs (a teljes menetrend 2. köre)
+## 2. licit kör — Szimpla betűs (a teljes menetrend 2. köre)
 
 | Terem | Betűk (licitálható egységek) |
 |---|---|
@@ -24,7 +24,7 @@
 | 4. terem | A · A · B · K · N · S · S · S · Y · Ú |
 | 5. terem | A · A · D · E · O · S · S · T · Á · Ö |
 
-## 3. licit — Dupla betűs (a teljes menetrend 4. köre)
+## 3. licit kör — Dupla betűs (a teljes menetrend 4. köre)
 
 | Terem | Betűk (licitálható egységek) |
 |---|---|
@@ -34,7 +34,7 @@
 | 4. terem | AÁ · DA · DI · ES · FH · JR · KZ · LA · TO · ÉÖ |
 | 5. terem | BK · EA · EE · FE · GP · NP · YM · YS · ÁK · ÜÖ |
 
-## 4. licit — Dupla betűs (a teljes menetrend 6. köre)
+## 4. licit kör — Dupla betűs (a teljes menetrend 6. köre)
 
 | Terem | Betűk (licitálható egységek) |
 |---|---|
@@ -44,7 +44,7 @@
 | 4. terem | AG · AV · DA · GA · HL · LE · OZ · YV · ZA · ZR |
 | 5. terem | DY · EÓ · JQ · LA · LO · NÉ · TA · TÁ · VA · WY |
 
-## 5. licit — Dupla betűs (a teljes menetrend 8. köre)
+## 5. licit kör — Dupla betűs (a teljes menetrend 8. köre)
 
 | Terem | Betűk (licitálható egységek) |
 |---|---|
@@ -54,7 +54,7 @@
 | 4. terem | AS · ES · GT · HA · JÁ · LE · LT · MI · ZÁ · ÓA |
 | 5. terem | AA · EO · ES · HK · IE · NB · PO · RY · XA · ZT |
 
-## 6. licit — Szimpla betűs (a teljes menetrend 10. köre)
+## 6. licit kör — Szimpla betűs (a teljes menetrend 10. köre)
 
 | Terem | Betűk (licitálható egységek) |
 |---|---|
