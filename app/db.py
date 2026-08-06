@@ -8,15 +8,12 @@ DB_PATH = Path(__file__).resolve().parent.parent / "data" / "wordgame.db"
 WORDLIST_DIR = Path(__file__).resolve().parent.parent / "wordlists"
 
 SEED_CATEGORY_FILES = {
-    "Fiú név": "fiu_nevek.txt",
-    "Lány név": "lany_nevek.txt",
-    "Ország": "orszagok.txt",
-    "Magyar város": "magyar_varosok.txt",
+    "Magyar anyakönyvezhető lánynevek": "lany_nevek.txt",
     "Kémiai elemek": "kemiai_elemek.txt",
-    "Olimpiai sportág (2024 nyár / 2026 tél)": "olimpiai_sportok.txt",
-    "Kémiai elem vagy Brawl Stars karakter": "kemiai_elem_vagy_brawl_stars.txt",
-    "Hangszer (klasszikus zeneoktatás)": "hangszerek.txt",
-    "1 milliónál népesebb önálló ország": "orszag_1m_felett.txt",
+    "Olimpiai sportágak (2024 nyár vagy 2026 tél)": "olimpiai_sportok.txt",
+    "Brawl Stars karakterek": "brawl_stars_karakterek.txt",
+    "ENSZ tagállamok (országok)": "ensz_tagallamok.txt",
+    "Magyar oktatásban tanulható klasszikus zenei hangszerek": "hangszerek.txt",
 }
 
 
@@ -65,18 +62,32 @@ def init_db() -> None:
         )
         conn.commit()
 
-        existing_names = {
-            row["name"] for row in conn.execute("SELECT name FROM categories").fetchall()
+        existing = {
+            row["name"]: row["id"] for row in conn.execute("SELECT id, name FROM categories").fetchall()
         }
+        # korabbi/mar nem hasznalt kategorianevek eltavolitasa (a hozzajuk tartozo
+        # szavak is torlodnek a CASCADE miatt), hogy a kategorialista mindig
+        # pontosan a SEED_CATEGORY_FILES-ban rogzitett vegleges listat tukrozze
+        for name, category_id in list(existing.items()):
+            if name not in SEED_CATEGORY_FILES:
+                conn.execute("DELETE FROM categories WHERE id = ?", (category_id,))
+                del existing[name]
+        conn.commit()
+
+        # minden kategoria szolistaja mindig a hozza tartozo txt fajl aktualis
+        # tartalmat tukrozi, ugy hogy egy tartalomfrissites (txt fajl szerkesztese)
+        # egyszeru git pull + szerver-ujrainditas utan azonnal ervenybe lep
         for name, filename in SEED_CATEGORY_FILES.items():
-            if name in existing_names:
-                continue
-            words = _load_wordlist(filename)
-            cur = conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
-            category_id = cur.lastrowid
+            words = [w.strip().upper() for w in _load_wordlist(filename) if w.strip()]
+            if name in existing:
+                category_id = existing[name]
+            else:
+                cur = conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
+                category_id = cur.lastrowid
+            conn.execute("DELETE FROM words WHERE category_id = ?", (category_id,))
             conn.executemany(
                 "INSERT OR IGNORE INTO words (category_id, word) VALUES (?, ?)",
-                [(category_id, w.upper()) for w in words],
+                [(category_id, w) for w in words],
             )
         conn.commit()
     finally:

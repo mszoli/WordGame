@@ -23,11 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
 
 DEFAULT_CATEGORY_ORDER = [
-    "Lány név",
-    "Olimpiai sportág (2024 nyár / 2026 tél)",
-    "Kémiai elem vagy Brawl Stars karakter",
-    "Hangszer (klasszikus zeneoktatás)",
-    "1 milliónál népesebb önálló ország",
+    "Magyar anyakönyvezhető lánynevek",
+    "Kémiai elemek",
+    "Olimpiai sportágak (2024 nyár vagy 2026 tél)",
+    "Brawl Stars karakterek",
+    "ENSZ tagállamok (országok)",
+    "Magyar oktatásban tanulható klasszikus zenei hangszerek",
 ]
 
 app = FastAPI(title="Szókirakós Játék")
